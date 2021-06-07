@@ -57,9 +57,9 @@ def update(spreadsheet_id):
         multipliers.append([''])
 
     # Add tomorrow's pitchers to spreadsheet
-    worksheet.update('A4', pitcher_names)
-    worksheet.update('G4', multipliers)
-    worksheet.update('E1', [[tomorrow]])
+    worksheet.update('B4', pitcher_names)
+    worksheet.update('H4', multipliers)
+    worksheet.update('F1', [[tomorrow]])
 
     print("Updated tomorrow's pitchers.")
 

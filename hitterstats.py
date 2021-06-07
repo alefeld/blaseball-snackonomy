@@ -85,7 +85,7 @@ def update(spreadsheet_id):
             SELECT team_name FROM hitters_statsheets WHERE player_id = "{}" ORDER by day DESC LIMIT 1
         '''.format(player_id)))[0][0]
 
-        print([player_name, atbats, pas, hits-homeruns, homeruns, steals])
+        # print([player_name, atbats, pas, hits-homeruns, homeruns, steals])
 
         # Check current player mods
         player_detail = bb.get_player(player_id)[player_id]
@@ -131,10 +131,10 @@ def update(spreadsheet_id):
 
     # Update spreadsheet
     payload = [list(player) for player in sqldb.execute('''SELECT * FROM hitters_proj ORDER BY team_name''')]
-    worksheet.update('A40:L', payload)
+    worksheet.update('A39:L', payload)
 
     # Update the day
-    worksheet.update('A38', today)
+    worksheet.update('A37', today)
 
     print("Hitter spreadsheet updated.")
 

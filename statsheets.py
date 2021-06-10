@@ -25,19 +25,6 @@ def update():
             primary key (player_id, day)
         )
     ''')
-    # sqldb.execute('''
-    #     CREATE TABLE IF NOT EXISTS pitchers_statsheet (
-    #         statsheet_id TINYTEXT,
-    #         player_id TINYTEXT NOT NULL,
-    #         day TINYINT UNSIGNED,
-    #         player_name TINYTEXT,
-    #         team_name TINYTEXT,
-    #         strikeouts SMALLINT UNSIGNED,
-    #         homeruns SMALLINT UNSIGNED,
-    #         shutouts SMALLINT UNSIGNED,
-    #         primary key (player_id, day)
-    #     )
-    # ''')
 
     # Figure out which days to process. Always process today (obvious) and yesterday (in case of very long games, as this is run at fixed intervals)
     # bb uses 1-indexed seasons and days as input
@@ -47,7 +34,7 @@ def update():
         SELECT DISTINCT day FROM hitters_statsheets ORDER BY day
     ''')]
     today = sim['day']
-    days = [day for day in range(1,today) if day not in days_processed] + [today, today+1]
+    days = [day for day in range(1,today) if day not in days_processed] + [today, today+1] # Always this Day and Day-1, and everything else if needed
 
     # Get incinerated players. We'll skip these statsheets
     incinerated = bb.get_tributes()
@@ -76,8 +63,9 @@ def update():
                 # Only count players that had a "PA" (AB+BB). This avoids counting attractors that peek out of the secret base (luckily it's very rare for a lineup player to only have sacrifice plays)
                 hitter_statsheets = [statsheet for statsheet in hitter_statsheets if statsheet['walks'] or statsheet['atBats']]
                 # Get lineup size. Count playerids instead of statsheets to account for scattered players who regained a letter this game
+                # Feedbacked players only end up with a statsheet for their final team!! Yay!!
                 hitter_ids = [statsheet['playerId'] for statsheet in hitter_statsheets]
-                # minor TODO Ways lineup_size is still miscounted (too many statsheets): feedback, carcinization, ambush immediately following an inhabit
+                # minor TODO Ways lineup_size is still miscounted (too many statsheets): carcinization, ambush immediately following an inhabit
                 # Get hitter stats
                 hitters_stats = {}
                 for hitter_statsheet in hitter_statsheets:

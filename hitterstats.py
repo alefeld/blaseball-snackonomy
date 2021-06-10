@@ -58,9 +58,6 @@ def update(spreadsheet_id):
         games = list(sqldb.execute('''
             SELECT Count(*) FROM hitters_statsheets WHERE player_id = "{}"
         '''.format(player_id)))[0][0]
-        atbats = list(sqldb.execute('''
-            SELECT SUM(atbats) FROM hitters_statsheets WHERE player_id = "{}"
-        '''.format(player_id)))[0][0]
         pas = list(sqldb.execute('''
             SELECT SUM(pas) FROM hitters_statsheets WHERE player_id = "{}"
         '''.format(player_id)))[0][0]
@@ -97,8 +94,8 @@ def update(spreadsheet_id):
 
         # Get current player mods
         player_detail = bb.get_player(player_id)[player_id]
-        print(player_detail)
-        quit()
+        # print(player_detail)
+        # quit()
         player_mods = player_detail['permAttr']+player_detail['seasAttr']+player_detail['itemAttr']
 
         # Check if this player can earn any money next game

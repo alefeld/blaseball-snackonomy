@@ -6,7 +6,7 @@ def update(spreadsheet_id):
     print("Updating tomorrow's pitchers...")
 
     # Connect to spreadsheet
-    credentials = gspread.oauth()
+    credentials = gspread.service_account()
     worksheet = credentials.open_by_key(spreadsheet_id).worksheet('Tomorrow\'s Pitchers')
 
     # Get tomorrow's game

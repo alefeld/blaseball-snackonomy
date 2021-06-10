@@ -6,13 +6,14 @@ def update(spreadsheet_id):
     print("Updating hitter spreadsheet...")
 
     # Connect to spreadsheet
-    credentials = gspread.oauth()
+    credentials = gspread.service_account()
     worksheet = credentials.open_by_key(spreadsheet_id).worksheet('Hitting Future Income')
 
     # Get season
     sim = bb.get_simulation_data()
     season = sim['season']+1
     today = sim['day']+1
+    tomorrow = today+1
 
     # Initialize database
     sqldb = sqlite3.connect('blaseball_S{}.db'.format(season))
@@ -23,12 +24,12 @@ def update(spreadsheet_id):
             player_name TINYTEXT,
             team_name TINYTEXT,
             games TINYINT UNSIGNED,
-            pas SMALLINT UNSIGNED,
+            papg FLOAT,
+            hppa FLOAT,
+            hrppa FLOAT,
+            sbppa FLOAT,
+            lineup_avg FLOAT,
             lineup_current TINYINT UNSIGNED,
-            papg_adjusted FLOAT,
-            hpg_adjusted FLOAT,
-            hrpg_adjusted FLOAT,
-            sbpg_adjusted FLOAT,
             can_earn TINYINT UNSIGNED,
             multiplier TINYINT UNSIGNED,
             primary key (player_id)
@@ -85,16 +86,36 @@ def update(spreadsheet_id):
             SELECT team_name FROM hitters_statsheets WHERE player_id = "{}" ORDER by day DESC LIMIT 1
         '''.format(player_id)))[0][0]
 
+        # if player_id == '11de4da3-8208-43ff-a1ff-0b3480a0fbf1':
+        #     print(pas/games)
+        #     print(lineup/games)
+        #     print(hits/pas)
+        #     print(homeruns/pas)
+        #     print(steals/pas)
+        #     quit()
         # print([player_name, atbats, pas, hits-homeruns, homeruns, steals])
 
-        # Check current player mods
+        # Get current player mods
         player_detail = bb.get_player(player_id)[player_id]
+        print(player_detail)
+        quit()
         player_mods = player_detail['permAttr']+player_detail['seasAttr']+player_detail['itemAttr']
+
+        # Check if this player can earn any money next game
         # Check if this player has a mod preventing them from making money
         can_earn = int(not any(mod in player_mods for mod in inactive_mods))
         # Check if this player is currently in the shadows
         if player_id in shadows:
             can_earn = 0
+        # Check if this team is playing tomorrow
+        tomorrow_games = bb.get_games(season, tomorrow)
+        teams_playing = []
+        for game in tomorrow_games:
+            teams_playing.append(tomorrow_games[game]['awayTeam'])
+            teams_playing.append(tomorrow_games[game]['homeTeam'])
+        if not player_detail['leagueTeamId'] in teams_playing and sim['phase'] not in [0,13]:
+            can_earn = 0
+            # pass
 
         # Determine payout multiplier
         multiplier = 1
@@ -111,20 +132,11 @@ def update(spreadsheet_id):
         # Calculate expected PA/G
         papg = pas/games
         lineup_avg = lineup/games
-        sf = lineup_avg / lineup_current
-        papg_adjusted = papg*sf
-
-        # Calculate adjusted earning stats
-        hpg_adjusted = hppa*papg_adjusted
-        hrpg_adjusted = hrppa*papg_adjusted
-        sbpg_adjusted = sbppa*papg_adjusted
-
-        # Add hitter statsheet to database
-        entry = [player_id, player_name, teams_shorten[team_name], games, pas, lineup_current, papg_adjusted, hpg_adjusted, hrpg_adjusted, sbpg_adjusted, can_earn, multiplier]
+        entry = [player_id, player_name, teams_shorten[team_name], games, papg, hppa, hrppa, sbppa, lineup_avg, lineup_current, can_earn, multiplier]
         sqldb.execute('''INSERT INTO hitters_proj 
             VALUES ("{0}", "{1}", "{2}", {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11})
             ON CONFLICT (player_id) DO
-            UPDATE SET player_name="{1}", team_name="{2}", games={3}, pas={4}, lineup_current={5}, papg_adjusted={6}, hpg_adjusted={7}, hrpg_adjusted={8}, sbpg_adjusted={9}, can_earn={10}, multiplier={11}'''.format(*entry))
+            UPDATE SET player_name="{1}", team_name="{2}", games={3}, papg={4}, hppa={5}, hrppa={6}, sbppa={7}, lineup_avg={8}, lineup_current={9}, can_earn={10}, multiplier={11}'''.format(*entry))
 
     # Save changes to database
     sqldb.commit()

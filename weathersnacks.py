@@ -9,7 +9,7 @@ def update(spreadsheet_id):
     print("Updating weather stats...")
 
     # Connect to spreadsheet
-    credentials = gspread.oauth()
+    credentials = gspread.service_account()
     worksheet = credentials.open_by_key(spreadsheet_id).worksheet('Weather Snacks')
 
     # Get current season

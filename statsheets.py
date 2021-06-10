@@ -65,7 +65,6 @@ def update():
             # Get team statsheets
             teams = ['homeTeamStats', 'awayTeamStats']
             for team in teams:
-                team_side = team[0:4]
                 team_statsheet_id = game_statsheet[team]
                 team_statsheet = bb.get_team_statsheets(team_statsheet_id)[team_statsheet_id]
                 # Get player statsheets.

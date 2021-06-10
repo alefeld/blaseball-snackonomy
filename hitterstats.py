@@ -42,9 +42,20 @@ def update(spreadsheet_id):
     teams_shorten = {}
     for team in teams:
         teams_shorten[teams[team]['fullName']] = teams[team]['shorthand']
-    bench = [ids for team in teams.values() for ids in team['bench'] if team['stadium']]
-    bullpen = [ids for team in teams.values() for ids in team['bullpen'] if team['stadium']]
+    teams_inleague = [team for team in teams.values() if team['stadium']]
+    bench = [ids for team in teams_inleague for ids in team['bench']]
+    bullpen = [ids for team in teams_inleague for ids in team['bullpen']]
     shadows = bench+bullpen
+    if sim['phase'] == 0:
+        teams_lineup = {}
+        for team in teams_inleague:
+            teammate_details = bb.get_player(team['lineup']).values()
+            lineup_current = 0
+            for teammate_detail in teammate_details:
+                teammate_mods = teammate_detail['permAttr']+teammate_detail['seasAttr']+teammate_detail['itemAttr']
+                if not any(mod in teammate_mods for mod in ['SHELLED','ELSEWHERE']):
+                    lineup_current += 1
+            teams_lineup[team['id']] = lineup_current
 
     # Get players
     player_ids = sqldb.execute('''
@@ -94,8 +105,6 @@ def update(spreadsheet_id):
 
         # Get current player mods
         player_detail = bb.get_player(player_id)[player_id]
-        # print(player_detail)
-        # quit()
         player_mods = player_detail['permAttr']+player_detail['seasAttr']+player_detail['itemAttr']
 
         # Check if this player can earn any money next game
@@ -126,22 +135,15 @@ def update(spreadsheet_id):
         hrppa = homeruns/pas
         sbppa = steals/pas
 
-        # Calculate come other stats
+        # Calculate some other stats
         papg = pas/games
         lineup_avg = lineup/games
 
         # Finally, if we're between the election and D0, get updated teams and lineup sizes post-election
         if sim['phase'] == 0:
             team_id = player_detail['leagueTeamId']
-            team_detail = bb.get_team(team_id)
-            team_name = team_detail['fullName']
-            teammate_ids = team_detail['lineup']
-            lineup_current = 0
-            for teammate_id in teammate_ids:
-                teammate_detail = bb.get_player(teammate_id)[teammate_id]
-                teammate_mods = teammate_detail['permAttr']+teammate_detail['seasAttr']+teammate_detail['itemAttr']
-                if not any(mod in teammate_mods for mod in ['SHELLED','ELSEWHERE']):
-                    lineup_current += 1
+            lineup_current = teams_lineup[team_id]
+            team_name = bb.get_team(team_id)['fullName']
 
         entry = [player_id, player_name, teams_shorten[team_name], games, papg, hppa, hrppa, sbppa, lineup_avg, lineup_current, can_earn, multiplier]
         sqldb.execute('''INSERT INTO hitters_proj 

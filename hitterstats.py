@@ -110,9 +110,9 @@ def update(spreadsheet_id):
         for game in tomorrow_games:
             teams_playing.append(tomorrow_games[game]['awayTeam'])
             teams_playing.append(tomorrow_games[game]['homeTeam'])
+        # But if we're in the offseason still let them be shown to make D0 predictions for the next season
         if not player_detail['leagueTeamId'] in teams_playing and sim['phase'] not in [0,13]:
             can_earn = 0
-            # pass
 
         # Determine payout multiplier
         multiplier = 1
@@ -126,9 +126,23 @@ def update(spreadsheet_id):
         hrppa = homeruns/pas
         sbppa = steals/pas
 
-        # Calculate expected PA/G
+        # Calculate come other stats
         papg = pas/games
         lineup_avg = lineup/games
+
+        # Finally, if we're between the election and D0, get updated teams and lineup sizes post-election
+        if sim['phase'] == 0:
+            team_id = player_detail['leagueTeamId']
+            team_detail = bb.get_team(team_id)
+            team_name = team_detail['fullName']
+            teammate_ids = team_detail['lineup']
+            lineup_current = 0
+            for teammate_id in teammate_ids:
+                teammate_detail = bb.get_player(teammate_id)[teammate_id]
+                teammate_mods = teammate_detail['permAttr']+teammate_detail['seasAttr']+teammate_detail['itemAttr']
+                if not any(mod in teammate_mods for mod in ['SHELLED','ELSEWHERE']):
+                    lineup_current += 1
+
         entry = [player_id, player_name, teams_shorten[team_name], games, papg, hppa, hrppa, sbppa, lineup_avg, lineup_current, can_earn, multiplier]
         sqldb.execute('''INSERT INTO hitters_proj 
             VALUES ("{0}", "{1}", "{2}", {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11})

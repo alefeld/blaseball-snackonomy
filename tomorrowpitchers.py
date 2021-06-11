@@ -17,6 +17,14 @@ def update(spreadsheet_id):
     tomorrow = sim['day']+2
     games = bb.get_games(season, tomorrow)
 
+    # Check if today's games are finished. Tomorrow's pitchers could be wrong, otherwise.
+    today = sim['day']+1
+    games_today = bb.get_games(18,95).values()
+    complete = [game['gameComplete'] for game in games_today]
+    if not all(complete):
+        print("Games not complete. Tomorrow's pitchers might be wrong, so waiting...")
+        quit()
+
     # Get pitchers
     pitcher_ids = []
     for game in games:

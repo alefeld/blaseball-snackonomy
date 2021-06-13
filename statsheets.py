@@ -1,10 +1,15 @@
-import blaseball_mike.database as bb
+import blaseball_mike.database as mike
 import sqlite3
 
 def update():
+    '''
+    Updates sqlite3 database with this season's games to date
+    '''
+
     print("Updating statsheets...")
+
     # Get season
-    sim = bb.get_simulation_data()
+    sim = mike.get_simulation_data()
     season = sim['season']+1
 
     # Initialize database
@@ -27,36 +32,36 @@ def update():
     ''')
 
     # Figure out which days to process. Always process today (obvious) and yesterday (in case of very long games, as this is run at fixed intervals)
-    # bb uses 1-indexed seasons and days as input
+    # mike uses 1-indexed seasons and days as input
     # blaseball.com returns 0-indexed seasons and days
 
     days_processed = [day[0] for day in sqldb.execute('''
         SELECT DISTINCT day FROM hitters_statsheets ORDER BY day
     ''')]
-    today = sim['day']
-    days = [day for day in range(1,today) if day not in days_processed] + [today, today+1] # Always this Day and Day-1, and everything else if needed
+    today = sim['day']+1
+    days = [day for day in range(1,today) if day not in days_processed] + [today-1, today] # Always this Day and Day-1, and everything else if needed
 
     # Get incinerated players. We'll skip these statsheets
-    incinerated = bb.get_tributes()
+    incinerated = mike.get_tributes()
     incinerated_ids = [player['playerId'] for player in incinerated]
 
     # Get all player data
     for day in days:
         print("Processing Day {}...".format(day))
         # Get the day's game statsheets
-        games = bb.get_games(season,day)
+        games = mike.get_games(season,day)
         game_ids = list(games.keys())
         game_statsheet_ids = [games[game_id]['statsheet'] for game_id in game_ids]
-        game_statsheets = [bb.get_game_statsheets(game_statsheet_id)[game_statsheet_id] for game_statsheet_id in game_statsheet_ids]
+        game_statsheets = [mike.get_game_statsheets(game_statsheet_id)[game_statsheet_id] for game_statsheet_id in game_statsheet_ids]
         for game_statsheet in game_statsheets:
             # Get team statsheets
             teams = ['homeTeamStats', 'awayTeamStats']
             for team in teams:
                 team_statsheet_id = game_statsheet[team]
-                team_statsheet = bb.get_team_statsheets(team_statsheet_id)[team_statsheet_id]
+                team_statsheet = mike.get_team_statsheets(team_statsheet_id)[team_statsheet_id]
                 # Get player statsheets.
                 player_statsheet_ids = team_statsheet['playerStats']
-                player_statsheets = [bb.get_player_statsheets(player_statsheet_id)[player_statsheet_id] for player_statsheet_id in player_statsheet_ids]
+                player_statsheets = [mike.get_player_statsheets(player_statsheet_id)[player_statsheet_id] for player_statsheet_id in player_statsheet_ids]
                 # Get only hitters, skip currently dead players, skip pitchers -> hitters in reverb, 
                 hitter_statsheets = [statsheet for statsheet in player_statsheets if not any([statsheet['pitchesThrown'], statsheet['outsRecorded'], statsheet['walksIssued']]) and statsheet['playerId'] not in incinerated_ids]
                 # When reverb swaps a hitter <-> pitcher, we still get the correct lineup size by ignoring the pitcher! (Whose stats should be ignored for the partial game anyway!)

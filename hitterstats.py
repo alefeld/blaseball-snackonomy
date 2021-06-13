@@ -1,19 +1,26 @@
 import gspread
-import blaseball_mike.database as bb
+import blaseball_mike.database as mike
 import sqlite3
 
-def update(spreadsheet_id):
+def update(spreadsheet_ids):
+    '''
+    Updates all hitter stats in the future hitting income tab of this season's snack spreadsheet
+    '''
+
     print("Updating hitter spreadsheet...")
+
+    # Get current season
+    sim = mike.get_simulation_data()
+    season = sim['season']+1
+    spreadsheet_id = spreadsheet_ids[season]
 
     # Connect to spreadsheet
     credentials = gspread.service_account()
     worksheet = credentials.open_by_key(spreadsheet_id).worksheet('Hitting Future Income')
 
-    # Get season
-    sim = bb.get_simulation_data()
-    season = sim['season']+1
+    # Get current dates
     today = sim['day']+1
-    tomorrow = today+1
+    tomorrow = sim['day']+2
 
     # Initialize database
     sqldb = sqlite3.connect('blaseball_S{}.db'.format(season))
@@ -38,7 +45,7 @@ def update(spreadsheet_id):
 
     # Prep some fields:
     inactive_mods = ['ELSEWHERE','SHELLED','LEGENDARY','REPLICA','NON_IDOLIZED']
-    teams = bb.get_all_teams()
+    teams = mike.get_all_teams()
     teams_shorten = {}
     for team in teams:
         teams_shorten[teams[team]['fullName']] = teams[team]['shorthand']
@@ -49,7 +56,7 @@ def update(spreadsheet_id):
     if sim['phase'] == 0:
         teams_lineup = {}
         for team in teams_inleague:
-            teammate_details = bb.get_player(team['lineup']).values()
+            teammate_details = mike.get_player(team['lineup']).values()
             lineup_current = 0
             for teammate_detail in teammate_details:
                 teammate_mods = teammate_detail['permAttr']+teammate_detail['seasAttr']+teammate_detail['itemAttr']
@@ -104,7 +111,7 @@ def update(spreadsheet_id):
         # print([player_name, atbats, pas, hits-homeruns, homeruns, steals])
 
         # Get current player mods
-        player_detail = bb.get_player(player_id)[player_id]
+        player_detail = mike.get_player(player_id)[player_id]
         player_mods = player_detail['permAttr']+player_detail['seasAttr']+player_detail['itemAttr']
 
         # Check if this player can earn any money next game
@@ -114,7 +121,7 @@ def update(spreadsheet_id):
         if player_id in shadows:
             can_earn = 0
         # Check if this team is playing tomorrow
-        tomorrow_games = bb.get_games(season, tomorrow)
+        tomorrow_games = mike.get_games(season, tomorrow)
         teams_playing = []
         for game in tomorrow_games:
             teams_playing.append(tomorrow_games[game]['awayTeam'])
@@ -143,7 +150,7 @@ def update(spreadsheet_id):
         if sim['phase'] == 0:
             team_id = player_detail['leagueTeamId']
             lineup_current = teams_lineup[team_id]
-            team_name = bb.get_team(team_id)['fullName']
+            team_name = mike.get_team(team_id)['fullName']
 
         entry = [player_id, player_name, teams_shorten[team_name], games, papg, hppa, hrppa, sbppa, lineup_avg, lineup_current, can_earn, multiplier]
         sqldb.execute('''INSERT INTO hitters_proj 
@@ -166,4 +173,8 @@ def update(spreadsheet_id):
     print("Hitter spreadsheet updated.")
 
 if __name__ == "__main__":
-    update('1_p6jsPxMvO0nGE-fiqGfilu-dxeUc994k2zwAGNVNr0')
+    spreadsheet_ids = {
+        19: '1_p6jsPxMvO0nGE-fiqGfilu-dxeUc994k2zwAGNVNr0',
+        20: '1EAqMvv2KrC9DjlJdlXrH_JXmHtAStxRJ661lWbuwYQs'
+    }
+    update(spreadsheet_ids)

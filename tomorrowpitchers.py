@@ -1,25 +1,31 @@
-import blaseball_mike.database as bb
+import blaseball_mike.database as mike
 import gspread
 
-def update(spreadsheet_id):
+def update(spreadsheet_ids):
+    '''
+    Updates tomorrow's pitchers in this season's snack spreadsheet
+    '''
 
     print("Updating tomorrow's pitchers...")
+
+    # Get current season
+    sim = mike.get_simulation_data()
+    season = sim['season']+1
+    spreadsheet_id = spreadsheet_ids[season]
 
     # Connect to spreadsheet
     credentials = gspread.service_account()
     worksheet = credentials.open_by_key(spreadsheet_id).worksheet('Tomorrow\'s Pitchers')
 
     # Get tomorrow's game
-    # bb uses 1-indexed seasons and days as input
+    # mike uses 1-indexed seasons and days as input
     # blaseball.com returns 0-indexed seasons and days
-    sim = bb.get_simulation_data()
-    season = sim['season']+1
     tomorrow = sim['day']+2
-    games = bb.get_games(season, tomorrow)
+    games = mike.get_games(season, tomorrow)
 
     # Check if today's games are finished. Tomorrow's pitchers could be wrong, otherwise.
     today = sim['day']+1
-    games_today = bb.get_games(season,today).values()
+    games_today = mike.get_games(season,today).values()
     complete = [game['gameComplete'] for game in games_today]
     if not all(complete):
         print("Games not complete. Tomorrow's pitchers might be wrong, so waiting...")
@@ -36,7 +42,7 @@ def update(spreadsheet_id):
     multipliers = []
     pitchers = []
     for pitcher_id in pitcher_ids:
-        pitcher = bb.get_player(pitcher_id)[pitcher_id]
+        pitcher = mike.get_player(pitcher_id)[pitcher_id]
         player_mods = pitcher['permAttr']+pitcher['seasAttr']+pitcher['itemAttr']
         # Determine payout multiplier
         multiplier = 1
@@ -72,4 +78,8 @@ def update(spreadsheet_id):
     print("Updated tomorrow's pitchers.")
 
 if __name__ == "__main__":
-    update('1_p6jsPxMvO0nGE-fiqGfilu-dxeUc994k2zwAGNVNr0')
+    spreadsheet_ids = {
+        19: '1_p6jsPxMvO0nGE-fiqGfilu-dxeUc994k2zwAGNVNr0',
+        20: '1EAqMvv2KrC9DjlJdlXrH_JXmHtAStxRJ661lWbuwYQs'
+    }
+    update(spreadsheet_ids)

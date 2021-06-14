@@ -6,4 +6,4 @@
 # |  |  |  |  |
 # *  *  *  *  * command to be executed
 #30,45,55 * * * * /usr/local/bin/python3 /code/update_all.py >> /var/log/cron.log 2>&1
-*/5 * * * * /usr/local/bin/python3 /code/update_all.py >> /var/log/cron.log 2>&1
+*/2 * * * * root /usr/local/bin/python3 /code/update_all.py >> /var/log/cron.log 2>&1

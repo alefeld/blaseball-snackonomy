@@ -16,6 +16,7 @@ WORKDIR /code
 COPY requirements.txt .
 RUN pip3 install -r requirements.txt
 COPY ./*.py .
+COPY ./run_all.sh .
 RUN chmod 0744 run_all.sh
 
 # Run Cron

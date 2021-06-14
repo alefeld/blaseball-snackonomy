@@ -19,5 +19,3 @@ if __name__ == "__main__":
     print("Start Timestamp: {:%Y-%b-%d %H:%M:%S}".format(datetime.datetime.now()))
     update_all(spreadsheet_ids)
     print("End Timestamp: {:%Y-%b-%d %H:%M:%S}".format(datetime.datetime.now()))
-
-#blahaj

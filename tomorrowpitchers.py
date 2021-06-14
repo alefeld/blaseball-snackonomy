@@ -26,6 +26,7 @@ def update(spreadsheet_ids):
     # Check if today's games are finished. Tomorrow's pitchers could be wrong, otherwise.
     today = sim['day']+1
     games_today = mike.get_games(season,today).values()
+    print(games_today)
     complete = [game['gameComplete'] for game in games_today]
     if not all(complete):
         print("Games not complete. Tomorrow's pitchers might be wrong, so waiting...")

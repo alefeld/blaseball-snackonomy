@@ -1,3 +1,2 @@
 gspread
 blaseball_mike
-sqlite3

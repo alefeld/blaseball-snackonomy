@@ -1,5 +1,5 @@
-import gspread
 import blaseball_mike.database as mike
+import gspread
 import sqlite3
 
 def update(spreadsheet_ids):

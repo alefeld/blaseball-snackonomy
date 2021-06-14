@@ -3,7 +3,7 @@ name: docker_push
 on:
   push:
     branches:
-      - 'rewrite'
+      - 'master'
 
 jobs:
   docker:

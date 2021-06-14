@@ -29,7 +29,7 @@ def update(spreadsheet_ids):
     complete = [game['gameComplete'] for game in games_today]
     if not all(complete):
         print("Games not complete. Tomorrow's pitchers might be wrong, so waiting...")
-        quit()
+        return
 
     # Get pitchers
     pitcher_ids = []

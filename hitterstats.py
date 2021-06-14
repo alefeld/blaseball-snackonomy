@@ -50,9 +50,7 @@ def update(spreadsheet_ids):
     for team in teams:
         teams_shorten[teams[team]['fullName']] = teams[team]['shorthand']
     teams_inleague = [team for team in teams.values() if team['stadium']]
-    bench = [ids for team in teams_inleague for ids in team['bench']]
-    bullpen = [ids for team in teams_inleague for ids in team['bullpen']]
-    shadows = bench+bullpen
+    shadows = [ids for team in teams_inleague for ids in team['shadows']]
     if sim['phase'] == 0:
         teams_lineup = {}
         for team in teams_inleague:

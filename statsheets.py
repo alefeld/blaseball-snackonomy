@@ -42,7 +42,7 @@ def update():
     days = [day for day in range(1,today) if day not in days_processed] + [today-1, today] # Always this Day and Day-1, and everything else if needed
 
     # Get incinerated players. We'll skip these statsheets
-    incinerated = mike.get_tributes()
+    incinerated = mike.get_tributes()['players']
     incinerated_ids = [player['playerId'] for player in incinerated]
 
     # Get all player data

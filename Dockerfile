@@ -5,6 +5,7 @@ MAINTAINER alefeld@alumni.nd.edu
 # Add this crontab file
 COPY crontab_snackonomy /etc/cron.d/crontab_snackonomy
 RUN chmod 0644 /etc/cron.d/crontab_snackonomy
+RUN touch /var/log/cron.log
 
 # Install Cron
 RUN apt-get update
@@ -17,4 +18,4 @@ RUN pip3 install -r requirements.txt
 COPY ./*.py .
 
 # Run Cron
-CMD cron
+CMD cron && tail -f /var/log/cron.log

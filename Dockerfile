@@ -10,11 +10,11 @@ RUN chmod 0644 /etc/cron.d/crontab_snackonomy
 RUN apt-get update
 RUN apt-get -y install cron
 
-# Run Cron
-CMD cron
-
 # Get the python code runnable
 WORKDIR /code
 COPY requirements.txt .
 RUN pip install -r requirements.txt
-COPY . .
+COPY ./*.py .
+
+# Run Cron
+CMD cron

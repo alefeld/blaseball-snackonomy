@@ -109,7 +109,11 @@ def update(spreadsheet_ids):
         # print([player_name, atbats, pas, hits-homeruns, homeruns, steals])
 
         # Get current player mods
-        player_detail = mike.get_player(player_id)[player_id]
+        try:
+            player_detail = mike.get_player(player_id)[player_id]
+        except: # If this player can't be gotten, like, say a ghost inhabits someone but the ghost doesn't technically EXIST...
+            continue
+
         player_mods = player_detail['permAttr']+player_detail['seasAttr']+player_detail['itemAttr']
 
         # Check if this player can earn any money next game

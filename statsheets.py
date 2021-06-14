@@ -13,7 +13,7 @@ def update():
     season = sim['season']+1
 
     # Initialize database
-    sqldb = sqlite3.connect('blaseball_S{}.db'.format(season))
+    sqldb = sqlite3.connect('databases/blaseball_S{}.db'.format(season))
     sqldb.execute('''
         CREATE TABLE IF NOT EXISTS hitters_statsheets (
             statsheet_id TINYTEXT,

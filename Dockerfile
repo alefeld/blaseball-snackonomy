@@ -13,7 +13,7 @@ RUN apt-get -y install cron
 # Get the python code runnable
 WORKDIR /code
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip3 install -r requirements.txt
 COPY ./*.py .
 
 # Run Cron

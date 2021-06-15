@@ -1,6 +1,22 @@
 import blaseball_mike.database as mike
 import gspread
 
+''' phases
+            e[e.Preseason = 1] = "Preseason",
+            e[e.Earlseason = 2] = "Earlseason",
+            e[e.EarlySiesta = 3] = "EarlySiesta",
+            e[e.Midseason = 4] = "Midseason",
+            e[e.LateSiesta = 5] = "LateSiesta",
+            e[e.Lateseason = 6] = "Lateseason",
+            e[e.SeasonEnd = 7] = "SeasonEnd",
+            e[e.PrePostseason = 8] = "PrePostseason",
+            e[e.EarlyPostseason = 9] = "EarlyPostseason",
+            e[e.EarlyPostseasonEnd = 10] = "EarlyPostseasonEnd",
+            e[e.Postseason = 11] = "Postseason",
+            e[e.PostseasonEnd = 12] = "PostseasonEnd",
+            e[e.Election = 13] = "Election"
+'''
+
 def update(spreadsheet_ids):
     '''
     Updates tomorrow's pitchers in this season's snack spreadsheet
@@ -17,19 +33,23 @@ def update(spreadsheet_ids):
     credentials = gspread.service_account()
     worksheet = credentials.open_by_key(spreadsheet_id).worksheet('Tomorrow\'s Pitchers')
 
+    # Earlsiesta and latesiesta mess up the "tomorrow" thing
+    if sim['phase'] in [3,5]:
+        tomorrow = sim['day']+1
+    else:
+        # Check if today's games are finished. Tomorrow's pitchers could be wrong, otherwise.
+        today = sim['day']+1
+        games_today = mike.get_games(season,today).values()
+        complete = [game['gameComplete'] for game in games_today]
+        if not all(complete):
+            print("Games not complete. Tomorrow's pitchers might be wrong, so waiting...")
+            return
+        tomorrow = sim['day']+2
+
     # Get tomorrow's game
     # mike uses 1-indexed seasons and days as input
     # blaseball.com returns 0-indexed seasons and days
-    tomorrow = sim['day']+2
     games = mike.get_games(season, tomorrow)
-
-    # Check if today's games are finished. Tomorrow's pitchers could be wrong, otherwise.
-    today = sim['day']+1
-    games_today = mike.get_games(season,today).values()
-    complete = [game['gameComplete'] for game in games_today]
-    if not all(complete):
-        print("Games not complete. Tomorrow's pitchers might be wrong, so waiting...")
-        return
 
     # Get pitchers
     pitcher_ids = []

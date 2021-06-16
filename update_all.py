@@ -10,10 +10,10 @@ spreadsheet_ids = {
 }
 
 def update_all(spreadsheet_ids):
+    tomorrowpitchers.update(spreadsheet_ids)
+    weathersnacks.update(spreadsheet_ids)
     statsheets.update()
     hitterstats.update(spreadsheet_ids)
-    weathersnacks.update(spreadsheet_ids)
-    tomorrowpitchers.update(spreadsheet_ids)
 
 if __name__ == "__main__":
     print("Start Timestamp: {:%Y-%b-%d %H:%M:%S}".format(datetime.datetime.now()))

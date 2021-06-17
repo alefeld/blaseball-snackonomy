@@ -167,10 +167,10 @@ def update(spreadsheet_ids):
     payload = [list(player) for player in sqldb.execute('''SELECT * FROM hitters_proj ORDER BY team_name''')]
     while len(payload) < 291:
         payload.append(['','','','','','','','','','','',''])
-    worksheet.update('A39:L', payload)
+    worksheet.update('A41:L', payload)
 
     # Update the day
-    worksheet.update('A37', today)
+    worksheet.update('A39', today)
 
     print("Hitter spreadsheet updated.")
 

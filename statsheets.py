@@ -35,15 +35,15 @@ def update():
     # mike uses 1-indexed seasons and days as input
     # blaseball.com returns 0-indexed seasons and days
 
-    days_processed = [day[0] for day in sqldb.execute('''
+    days_processed = set([day[0] for day in sqldb.execute('''
         SELECT DISTINCT day FROM hitters_statsheets ORDER BY day
-    ''')]
+    ''')])
     today = sim['day']+1
     days = [day for day in range(1,today) if day not in days_processed] + [today-1, today] # Always this Day and Day-1, and everything else if needed
 
     # Get incinerated players. We'll skip these statsheets
     incinerated = mike.get_tributes()['players']
-    incinerated_ids = [player['playerId'] for player in incinerated]
+    incinerated_ids = set([player['playerId'] for player in incinerated])
 
     # Get all player data
     for day in days:

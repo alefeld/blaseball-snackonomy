@@ -51,6 +51,7 @@ def update(spreadsheet_ids):
         teams_shorten[teams[team]['fullName']] = teams[team]['shorthand']
     teams_inleague = [team for team in teams.values() if team['stadium']]
     shadows = [ids for team in teams_inleague for ids in team['shadows']]
+    pitchers = [ids for team in teams_inleague for ids in team['rotation']]
     if sim['phase'] == 0:
         teams_lineup = {}
         for team in teams_inleague:
@@ -120,7 +121,7 @@ def update(spreadsheet_ids):
         # Check if this player has a mod preventing them from making money
         can_earn = int(not any(mod in player_mods for mod in inactive_mods))
         # Check if this player is currently in the shadows
-        if player_id in shadows:
+        if player_id in shadows or player_id in pitchers:
             can_earn = 0
         # Check if this team is playing tomorrow
         tomorrow_games = mike.get_games(season, tomorrow)

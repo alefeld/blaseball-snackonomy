@@ -44,14 +44,26 @@ def update(spreadsheet_ids):
     ''')
 
     # Prep some fields:
+    # Mods that mean a player can't earn money
     inactive_mods = set(['ELSEWHERE','SHELLED','LEGENDARY','REPLICA','NON_IDOLIZED'])
+    # Map of team full name to shorthand
     teams = mike.get_all_teams()
     teams_shorten = {}
     for team in teams:
         teams_shorten[teams[team]['fullName']] = teams[team]['shorthand']
+    # List of teams in league (ignore historical/coffee cup teams)
     teams_inleague = [team for team in teams.values() if team['stadium']]
+    # Shadows players for players who moved to shadows
     shadows = [ids for team in teams_inleague for ids in team['shadows']]
+    # Pitchers for players who reverbed/feedbacked to being a pitcher
     pitchers = [ids for team in teams_inleague for ids in team['rotation']]
+    # Teams playing tomorrow to support the postseason
+    tomorrow_games = mike.get_games(season, tomorrow)
+    teams_playing = set()
+    for game in tomorrow_games:
+        teams_playing.add(tomorrow_games[game]['awayTeam'])
+        teams_playing.add(tomorrow_games[game]['homeTeam'])
+    # After the election, get current team lineups to update the recommendations for D0
     if sim['phase'] == 0:
         teams_lineup = {}
         for team in teams_inleague:
@@ -124,13 +136,8 @@ def update(spreadsheet_ids):
         if player_id in shadows or player_id in pitchers:
             can_earn = 0
         # Check if this team is playing tomorrow
-        tomorrow_games = mike.get_games(season, tomorrow)
-        teams_playing = set()
-        for game in tomorrow_games:
-            teams_playing.add(tomorrow_games[game]['awayTeam'])
-            teams_playing.add(tomorrow_games[game]['homeTeam'])
         # But if we're in the offseason still let them be shown to make D0 predictions for the next season
-        if not player_detail['leagueTeamId'] in teams_playing and sim['phase'] not in set(0,13):
+        if not player_detail['leagueTeamId'] in teams_playing and sim['phase'] not in [0,13]:
             can_earn = 0
 
         # Determine payout multiplier

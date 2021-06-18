@@ -44,7 +44,7 @@ def update(spreadsheet_ids):
     ''')
 
     # Prep some fields:
-    inactive_mods = ['ELSEWHERE','SHELLED','LEGENDARY','REPLICA','NON_IDOLIZED']
+    inactive_mods = set(['ELSEWHERE','SHELLED','LEGENDARY','REPLICA','NON_IDOLIZED'])
     teams = mike.get_all_teams()
     teams_shorten = {}
     for team in teams:
@@ -58,7 +58,7 @@ def update(spreadsheet_ids):
             teammate_details = mike.get_player(team['lineup']).values()
             lineup_current = 0
             for teammate_detail in teammate_details:
-                teammate_mods = teammate_detail['permAttr']+teammate_detail['seasAttr']+teammate_detail['itemAttr']
+                teammate_mods = set(teammate_detail['permAttr']+teammate_detail['seasAttr']+teammate_detail['itemAttr'])
                 if not any(mod in teammate_mods for mod in ['SHELLED','ELSEWHERE']):
                     lineup_current += 1
             teams_lineup[team['id']] = lineup_current
@@ -125,12 +125,12 @@ def update(spreadsheet_ids):
             can_earn = 0
         # Check if this team is playing tomorrow
         tomorrow_games = mike.get_games(season, tomorrow)
-        teams_playing = []
+        teams_playing = set()
         for game in tomorrow_games:
-            teams_playing.append(tomorrow_games[game]['awayTeam'])
-            teams_playing.append(tomorrow_games[game]['homeTeam'])
+            teams_playing.add(tomorrow_games[game]['awayTeam'])
+            teams_playing.add(tomorrow_games[game]['homeTeam'])
         # But if we're in the offseason still let them be shown to make D0 predictions for the next season
-        if not player_detail['leagueTeamId'] in teams_playing and sim['phase'] not in [0,13]:
+        if not player_detail['leagueTeamId'] in teams_playing and sim['phase'] not in set(0,13):
             can_earn = 0
 
         # Determine payout multiplier

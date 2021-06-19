@@ -1,12 +1,13 @@
 import blaseball_mike.database as mike
 import gspread
+import logging
 
 def update(spreadsheet_ids):
     '''
     Updates weather values in this season's snack spreadsheet
     '''
 
-    print("Updating weather stats...")
+    logging.info("Updating weather stats...")
 
     # Get current season
     sim = mike.get_simulation_data()
@@ -37,15 +38,16 @@ def update(spreadsheet_ids):
     incinerations = len([event for event in events_eclipse if "rogue umpire incinerated" in event['description'].lower()])
 
     # Flooding
-    events_flood = mike.get_feed_global(season=season, limit=500, type_=62)
+    events_flood = mike.get_feed_global(season=season, limit=2000, type_=62)
     # url = https://www.blaseball.com/database/feed/global?limit=500&season=18&type=62
     flood_activations = len(events_flood)
-    events_swept = mike.get_feed_global(season=season, limit=500, type_=106)
+    events_swept = mike.get_feed_global(season=season, limit=2000, type_=106)
     # url = https://www.blaseball.com/database/feed/global?limit=500&season=18&type=106
-    flood_payouts = len([event for event in events_swept if "swept elsewhere" in event['description'].lower()])
+    # flood_payouts = len([event for event in events_swept if "swept elsewhere" in event['description'].lower()])
+    flood_payouts = len([event for event in events_swept if "was swept" in event['description'].lower()])
 
     # Consumers
-    events_consumers = mike.get_feed_global(season=season, limit=500, type_=67)
+    events_consumers = mike.get_feed_global(season=season, limit=2000, type_=67)
     # url = https://www.blaseball.com/database/feed/global?limit=500&season=18&type=67
     attacks = len([event for event in events_consumers if "consumers" in event['description'].lower()])
 
@@ -59,7 +61,7 @@ def update(spreadsheet_ids):
     ]
     worksheet.update('C2:D', payload)
 
-    print("Weather stats updated.")
+    logging.info("Weather stats updated.")
 
 if __name__ == "__main__":
     spreadsheet_ids = {

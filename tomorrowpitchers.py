@@ -1,5 +1,6 @@
 import blaseball_mike.database as mike
 import gspread
+import logging
 
 ''' phases
             e[e.Preseason = 1] = "Preseason",
@@ -22,7 +23,7 @@ def update(spreadsheet_ids):
     Updates tomorrow's pitchers in this season's snack spreadsheet
     '''
 
-    print("Updating tomorrow's pitchers...")
+    logging.info("Updating tomorrow's pitchers...")
 
     # Get current season
     sim = mike.get_simulation_data()
@@ -42,7 +43,7 @@ def update(spreadsheet_ids):
         games_today = mike.get_games(season,today).values()
         complete = [game['gameComplete'] for game in games_today]
         if not all(complete):
-            print("Games not complete. Tomorrow's pitchers might be wrong, so waiting...")
+            logging.info("Games not complete. Tomorrow's pitchers might be wrong, so waiting...")
             return
         tomorrow = sim['day']+2
 
@@ -55,7 +56,7 @@ def update(spreadsheet_ids):
     # for game in games:
     #     pitcher_names.append(games[game]['homePitcherName'])
     #     pitcher_names.append(games[game]['awayPitcherName'])
-    # print(pitcher_names)
+    # logging.info(pitcher_names)
     # quit()
 
     # Get pitchers
@@ -102,7 +103,7 @@ def update(spreadsheet_ids):
     worksheet.update('H4', multipliers)
     worksheet.update('F1', [[tomorrow]])
 
-    print("Updated tomorrow's pitchers.")
+    logging.info("Updated tomorrow's pitchers.")
 
 if __name__ == "__main__":
     spreadsheet_ids = {

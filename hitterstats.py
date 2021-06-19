@@ -1,5 +1,6 @@
 import blaseball_mike.database as mike
 import gspread
+import logging
 import sqlite3
 
 def update(spreadsheet_ids):
@@ -7,7 +8,7 @@ def update(spreadsheet_ids):
     Updates all hitter stats in the future hitting income tab of this season's snack spreadsheet
     '''
 
-    print("Updating hitter spreadsheet...")
+    logging.info("Updating hitter spreadsheet...")
 
     # Get current season
     sim = mike.get_simulation_data()
@@ -123,13 +124,13 @@ def update(spreadsheet_ids):
         '''.format(player_id)))[0][0]
 
         # if player_id == '11de4da3-8208-43ff-a1ff-0b3480a0fbf1':
-        #     print(pas/games)
-        #     print(lineup/games)
-        #     print(hits/pas)
-        #     print(homeruns/pas)
-        #     print(steals/pas)
+        #     logging.info(pas/games)
+        #     logging.info(lineup/games)
+        #     logging.info(hits/pas)
+        #     logging.info(homeruns/pas)
+        #     logging.info(steals/pas)
         #     quit()
-        # print([player_name, atbats, pas, hits-homeruns, homeruns, steals])
+        # logging.info([player_name, atbats, pas, hits-homeruns, homeruns, steals])
 
         # Get current player mods
         try:
@@ -190,7 +191,7 @@ def update(spreadsheet_ids):
     # Update the day
     worksheet.update('A40', today)
 
-    print("Hitter spreadsheet updated.")
+    logging.info("Hitter spreadsheet updated.")
 
 if __name__ == "__main__":
     spreadsheet_ids = {

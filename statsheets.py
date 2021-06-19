@@ -1,4 +1,5 @@
 import blaseball_mike.database as mike
+import logging
 import sqlite3
 
 def update():
@@ -6,7 +7,7 @@ def update():
     Updates sqlite3 database with this season's games to date
     '''
 
-    print("Updating statsheets...")
+    logging.info("Updating statsheets...")
 
     # Get season
     sim = mike.get_simulation_data()
@@ -47,7 +48,7 @@ def update():
 
     # Get all player data
     for day in days:
-        print("Processing Day {}...".format(day))
+        logging.info("Processing Day {}...".format(day))
         # Get the day's game statsheets
         games = mike.get_games(season,day)
         game_ids = list(games.keys())
@@ -94,7 +95,7 @@ def update():
                     else:
                         hitters_stats[player_id] = [statsheet_id, player_id, day, player_name, team_name, atbats, pas, hits, homeruns, steals, lineup_size]
                 for hitter_stats in hitters_stats.values():
-                    # print(hitter_stats)
+                    # logging.info(hitter_stats)
                     sqldb.execute('''INSERT INTO hitters_statsheets 
                         VALUES ("{0}", "{1}", {2}, "{3}", "{4}", {5}, {6}, {7}, {8}, {9}, {10})
                         ON CONFLICT (player_id, day) DO
@@ -104,7 +105,7 @@ def update():
         # Save this day's changes to database
         sqldb.commit()
 
-    print("Statsheets updated.")
+    logging.info("Statsheets updated.")
 
 if __name__ == "__main__":
     update()

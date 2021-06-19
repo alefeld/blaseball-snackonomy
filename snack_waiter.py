@@ -9,7 +9,7 @@ logging.basicConfig(format = '%(message)s',
                     level = logging.INFO,
                     handlers = [logger])
 
-stream = SSEClient('http://blaseball.com/events/streamData')
+stream = SSEClient('http://blaseball.com/events/streamData', retry=1000)
 
 season_last = -1
 day_last = -1
@@ -31,7 +31,7 @@ for message in stream:
     if day != day_last or season != season_last:
         all_finished = all([schedule['finalized'] for schedule in schedules])
         if all_finished:
-            logging.info("Waiter is now running snack errands.")
+            logging.info("Games finished! Waiter is now running snack errands.")
             logging.info("Start Timestamp: {:%Y-%b-%d %H:%M:%S}".format(datetime.datetime.now()))
             update_all.update_all()
             season_last = season

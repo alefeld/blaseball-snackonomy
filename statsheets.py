@@ -101,8 +101,8 @@ def update():
                         UPDATE SET player_name="{3}", team_name="{4}", atbats={5}, pas={6}, hits={7}, homeruns={8}, steals={9}, lineup_size={10}'''.format(*hitter_stats)
                     )
 
-    # Save this day's changes to database
-    sqldb.commit()
+        # Save this day's changes to database
+        sqldb.commit()
 
     print("Statsheets updated.")
 

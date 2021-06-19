@@ -9,7 +9,7 @@ spreadsheet_ids = {
     20: '1EAqMvv2KrC9DjlJdlXrH_JXmHtAStxRJ661lWbuwYQs'
 }
 
-def update_all(spreadsheet_ids):
+def update_all(spreadsheet_ids=spreadsheet_ids):
     tomorrowpitchers.update(spreadsheet_ids)
     weathersnacks.update(spreadsheet_ids)
     statsheets.update()
@@ -17,5 +17,5 @@ def update_all(spreadsheet_ids):
 
 if __name__ == "__main__":
     print("Start Timestamp: {:%Y-%b-%d %H:%M:%S}".format(datetime.datetime.now()))
-    update_all(spreadsheet_ids)
+    update_all()
     print("End Timestamp: {:%Y-%b-%d %H:%M:%S}".format(datetime.datetime.now()))

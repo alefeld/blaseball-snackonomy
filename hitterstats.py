@@ -58,8 +58,18 @@ def update(spreadsheet_ids):
     # Pitchers for players who reverbed/feedbacked to being a pitcher
     pitchers = [ids for team in teams_inleague for ids in team['rotation']]
     # Teams playing tomorrow to support the postseason
-    tomorrow_games = mike.get_games(season, tomorrow)
     teams_playing = set()
+    # if sim['phase'] in [8,10]:
+    #     playoffs = mike.get_playoff_details(season)
+    #     round_id = playoffs['rounds'][0] # Just get wildcard round
+    #     round = mike.get_playoff_round(round_id)
+    #     matchups_wildcard_ids = [round['matchups'][1],round['matchups'][5]]
+    #     for matchup_wildcard in mike.get_playoff_matchups(matchups_wildcard_ids).values():
+    #         teams_playing.add(matchup_wildcard['homeTeam'])
+    #         teams_playing.add(matchup_wildcard['awayTeam'])
+    #     # This only has the overbracket teams... Can't find an endpoint for underbracket :/
+    # else:
+    tomorrow_games = mike.get_games(season, tomorrow)
     for game in tomorrow_games:
         teams_playing.add(tomorrow_games[game]['awayTeam'])
         teams_playing.add(tomorrow_games[game]['homeTeam'])

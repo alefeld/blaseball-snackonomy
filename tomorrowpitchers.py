@@ -50,6 +50,13 @@ def update(spreadsheet_ids):
     # mike uses 1-indexed seasons and days as input
     # blaseball.com returns 0-indexed seasons and days
     games = mike.get_games(season, tomorrow)
+    # games = mike.get_games(season, tomorrow-1)
+    # pitcher_names = []
+    # for game in games:
+    #     pitcher_names.append(games[game]['homePitcherName'])
+    #     pitcher_names.append(games[game]['awayPitcherName'])
+    # print(pitcher_names)
+    # quit()
 
     # Get pitchers
     pitcher_ids = []

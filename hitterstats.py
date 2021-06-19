@@ -191,7 +191,7 @@ def update(spreadsheet_ids):
         #     UPDATE SET player_name="{1}", team_name="{2}", games={3}, pas={4}, hits={5}, homeruns={6}, steals={7}, papg={8}, hppa={9}, hrppa={10}, sbppa={11}, lineup_avg={12}, lineup_current={13}, can_earn={14}, multiplier={15}'''.format(*entry))
 
     # Save changes to database
-    # sqldb.commit()
+    sqldb.commit()
 
     # Update spreadsheet
     payload = [list(player) for player in sqldb.execute('''SELECT * FROM hitters_proj ORDER BY team_name''')]

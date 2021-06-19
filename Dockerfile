@@ -18,6 +18,7 @@ RUN pip3 install -r requirements.txt
 COPY ./*.py .
 COPY ./run_all.sh .
 COPY ./run_waiter.sh .
+RUN touch waiter.log
 RUN chmod 0744 run_all.sh
 RUN chmod 0744 run_waiter.sh
 
@@ -25,4 +26,4 @@ RUN chmod 0744 run_waiter.sh
 CMD cron && tail -f /var/log/cron.log
 
 # Run waiter
-# CMD ["root","/code/run_waiter.sh"]
+# CMD /code/run_waiter.sh && tail -f /code/watier.log

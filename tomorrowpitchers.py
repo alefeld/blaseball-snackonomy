@@ -40,7 +40,7 @@ def update(spreadsheet_ids):
     else:
         # Check if today's games are finished. Tomorrow's pitchers could be wrong, otherwise.
         today = sim['day']+1
-        games_today = mike.get_games(season,today).values()
+        games_today = mike.get_games(season, today).values()
         complete = [game['gameComplete'] for game in games_today]
         if not all(complete):
             logging.info("Games not complete. Tomorrow's pitchers might be wrong, so waiting...")
@@ -66,12 +66,10 @@ def update(spreadsheet_ids):
         pitcher_ids.append(games[game]['awayPitcher'])
 
     # Get current pitcher names
-    pitcher_names = []
-    multipliers = []
     pitchers = []
-    for pitcher_id in pitcher_ids:
-        pitcher = mike.get_player(pitcher_id)[pitcher_id]
-        player_mods = pitcher['permAttr']+pitcher['seasAttr']+pitcher['itemAttr']
+    pitcher_details = mike.get_player(pitcher_ids).values()
+    for pitcher_detail in pitcher_details:
+        player_mods = pitcher_detail['permAttr']+pitcher_detail['seasAttr']+pitcher_detail['itemAttr']
         # Determine payout multiplier
         multiplier = 1
         if 'DOUBLE_PAYOUTS' in player_mods:
@@ -83,9 +81,7 @@ def update(spreadsheet_ids):
         can_earn = int(not any(mod in player_mods for mod in inactive_mods))
         if not can_earn:
             multiplier = 0
-        pitcher_names.append([pitcher['name']])
-        multipliers.append([multiplier])
-        pitchers.append((pitcher['name'], multiplier))
+        pitchers.append((pitcher_detail['name'], multiplier))
 
     # Sort by multiplier
     pitchers.sort(key = lambda x: x[1], reverse=True)

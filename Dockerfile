@@ -25,4 +25,4 @@ RUN chmod 0744 run_waiter.sh
 CMD cron && tail -f /var/log/cron.log
 
 # Run waiter
-CMD run_waiter.sh
+CMD /code/run_waiter.sh

@@ -18,6 +18,7 @@ def update(spreadsheet_ids):
     # Connect to spreadsheet
     credentials = gspread.service_account()
     worksheet = credentials.open_by_key(spreadsheet_id).worksheet('Hitting Future Income')
+    # worksheet = credentials.open_by_key(spreadsheet_id).worksheet('All Hitters Test')
 
     # Get current dates
     today = sim['day']+1
@@ -47,7 +48,7 @@ def update(spreadsheet_ids):
     # Prep some fields:
     # Mods that mean a player can't earn money
     inactive_mods = set(['ELSEWHERE','SHELLED','LEGENDARY','REPLICA','NON_IDOLIZED'])
-    # ncinerated players
+    # Incinerated players
     incinerated = mike.get_tributes()['players']
     incinerated_ids = set([player['playerId'] for player in incinerated])
     # Map of team full name to shorthand
@@ -94,8 +95,15 @@ def update(spreadsheet_ids):
         SELECT DISTINCT player_id FROM hitters_statsheets
     ''')
 
+    # Get details for use later (mods, team active, etc.)
+    player_ids = [player_id[0] for player_id in player_ids]
+    player_details = mike.get_player(player_ids)
+
     for player_id in player_ids:
-        player_id = player_id[0]
+
+        # If this player can't be gotten, like, say a ghost inhabits someone but the ghost doesn't technically EXIST...
+        if player_id not in player_details:
+            continue
 
         # Calculate money stats
         games = list(sqldb.execute('''
@@ -136,12 +144,7 @@ def update(spreadsheet_ids):
         # logging.info([player_name, atbats, pas, hits-homeruns, homeruns, steals])
 
         # Get current player mods
-        try:
-            player_detail = mike.get_player(player_id)[player_id]
-        except: # If this player can't be gotten, like, say a ghost inhabits someone but the ghost doesn't technically EXIST...
-            continue
-
-        player_mods = player_detail['permAttr']+player_detail['seasAttr']+player_detail['itemAttr']
+        player_mods = player_details[player_id]['permAttr']+player_details[player_id]['seasAttr']+player_details[player_id]['itemAttr']
 
         # Check if this player can earn any money next game
         # Check if this player has a mod preventing them from making money
@@ -151,7 +154,7 @@ def update(spreadsheet_ids):
             can_earn = 0
         # Check if this team is playing tomorrow
         # But if we're in the offseason still let them be shown to make D0 predictions for the next season
-        if not player_detail['leagueTeamId'] in teams_playing and sim['phase'] not in [0,13]:
+        if not player_details[player_id]['leagueTeamId'] in teams_playing and sim['phase'] not in [0,13]:
             can_earn = 0
 
         # Determine payout multiplier
@@ -172,7 +175,7 @@ def update(spreadsheet_ids):
 
         # Finally, if we're between the election and D0, get updated teams and lineup sizes post-election
         if sim['phase'] == 0:
-            team_id = player_detail['leagueTeamId']
+            team_id = player_details[player_id]['leagueTeamId']
             lineup_current = teams_lineup[team_id]
             team_name = mike.get_team(team_id)['fullName']
 
@@ -181,15 +184,24 @@ def update(spreadsheet_ids):
             VALUES ("{0}", "{1}", "{2}", {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11})
             ON CONFLICT (player_id) DO
             UPDATE SET player_name="{1}", team_name="{2}", games={3}, papg={4}, hppa={5}, hrppa={6}, sbppa={7}, lineup_avg={8}, lineup_current={9}, can_earn={10}, multiplier={11}'''.format(*entry))
+        # entry = [player_id, player_name, teams_shorten[team_name], games, pas, hits, homeruns, steals, papg, hppa, hrppa, sbppa, lineup_avg, lineup_current, can_earn, multiplier]
+        # sqldb.execute('''INSERT INTO hitters_proj 
+        #     VALUES ("{0}", "{1}", "{2}", {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12}, {13}, {14}, {15})
+        #     ON CONFLICT (player_id) DO
+        #     UPDATE SET player_name="{1}", team_name="{2}", games={3}, pas={4}, hits={5}, homeruns={6}, steals={7}, papg={8}, hppa={9}, hrppa={10}, sbppa={11}, lineup_avg={12}, lineup_current={13}, can_earn={14}, multiplier={15}'''.format(*entry))
 
     # Save changes to database
-    sqldb.commit()
+    # sqldb.commit()
 
     # Update spreadsheet
     payload = [list(player) for player in sqldb.execute('''SELECT * FROM hitters_proj ORDER BY team_name''')]
     while len(payload) < 291:
         payload.append(['','','','','','','','','','','',''])
     worksheet.update('A42:L', payload)
+    # payload = [list(player) for player in sqldb.execute('''SELECT * FROM hitters_proj ORDER BY team_name''')]
+    # while len(payload) < 300:
+    #     payload.append(['','','','','','','','','','','','','','','',''])
+    # worksheet.update('A2:P', payload)
 
     # Update the day
     worksheet.update('A40', today)

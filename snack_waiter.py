@@ -1,7 +1,13 @@
 from sseclient import SSEClient
 import datetime
 import json
+import logging
 import update_all
+
+logger = logging.FileHandler('waiter.log', 'w')
+logging.basicConfig(format = '%(message)s',
+                    level = logging.INFO,
+                    handlers = [logger])
 
 stream = SSEClient('http://blaseball.com/events/streamData')
 
@@ -25,10 +31,11 @@ for message in stream:
     if day != day_last or season != season_last:
         all_finished = all([schedule['finalized'] for schedule in schedules])
         if all_finished:
-            print("Start Timestamp: {:%Y-%b-%d %H:%M:%S}".format(datetime.datetime.now()))
+            logging.info("Waiter is now running snack errands.")
+            logging.info("Start Timestamp: {:%Y-%b-%d %H:%M:%S}".format(datetime.datetime.now()))
             update_all.update_all()
             season_last = season
             day_last = day
-            print("End Timestamp: {:%Y-%b-%d %H:%M:%S}".format(datetime.datetime.now()))
+            logging.info("End Timestamp: {:%Y-%b-%d %H:%M:%S}".format(datetime.datetime.now()))
     else:
         pass

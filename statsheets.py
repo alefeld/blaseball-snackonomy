@@ -1,6 +1,7 @@
 import blaseball_mike.database as mike
 import logging
 import sqlite3
+import time
 
 def update():
     '''
@@ -53,54 +54,58 @@ def update():
         games = mike.get_games(season,day)
         game_ids = list(games.keys())
         game_statsheet_ids = [games[game_id]['statsheet'] for game_id in game_ids]
-        game_statsheets = [mike.get_game_statsheets(game_statsheet_id)[game_statsheet_id] for game_statsheet_id in game_statsheet_ids]
-        for game_statsheet in game_statsheets:
-            # Get team statsheets
-            teams = ['homeTeamStats', 'awayTeamStats']
-            for team in teams:
-                team_statsheet_id = game_statsheet[team]
-                team_statsheet = mike.get_team_statsheets(team_statsheet_id)[team_statsheet_id]
-                # Get player statsheets.
-                player_statsheet_ids = team_statsheet['playerStats']
-                player_statsheets = [mike.get_player_statsheets(player_statsheet_id)[player_statsheet_id] for player_statsheet_id in player_statsheet_ids]
-                # Get only hitters, skip currently dead players, skip pitchers -> hitters in reverb, 
-                hitter_statsheets = [statsheet for statsheet in player_statsheets if not any([statsheet['pitchesThrown'], statsheet['outsRecorded'], statsheet['walksIssued']]) and statsheet['playerId'] not in incinerated_ids]
-                # When reverb swaps a hitter <-> pitcher, we still get the correct lineup size by ignoring the pitcher! (Whose stats should be ignored for the partial game anyway!)
-                # Only count players that had a "PA" (AB+BB). This avoids counting attractors that peek out of the secret base (luckily it's very rare for a lineup player to only have sacrifice plays)
-                hitter_statsheets = [statsheet for statsheet in hitter_statsheets if statsheet['walks'] or statsheet['atBats']]
-                # Get lineup size. Count playerids instead of statsheets to account for scattered players who regained a letter this game
-                # Feedbacked players only end up with a statsheet for their final team!! Yay!!
-                hitter_ids = [statsheet['playerId'] for statsheet in hitter_statsheets]
-                # minor TODO Ways lineup_size is still miscounted (too many statsheets): carcinization, ambush immediately following an inhabit
-                # Get hitter stats
-                hitters_stats = {}
-                for hitter_statsheet in hitter_statsheets:
-                    # Easy stats
-                    statsheet_id = hitter_statsheet['id']
-                    player_id = hitter_statsheet['playerId']
-                    player_name = hitter_statsheet['name']
-                    team_name = hitter_statsheet['team']
-                    atbats = hitter_statsheet['atBats']
-                    pas = atbats+hitter_statsheet['walks']
-                    hits = hitter_statsheet['hits']
-                    homeruns = hitter_statsheet['homeRuns']
-                    steals = hitter_statsheet['stolenBases']
-                    lineup_size = len(set(hitter_ids))
+        game_statsheets = mike.get_game_statsheets(game_statsheet_ids).values()
+        # Get team statsheets
+        teams = ['homeTeamStats', 'awayTeamStats']
+        team_statsheet_ids = [game_statsheet[team] for game_statsheet in game_statsheets for team in teams]
+        team_statsheets = mike.get_team_statsheets(team_statsheet_ids).values()
+        # vvv This isn't ideal because we need players grouped by teams for lineup size analysis   vvv
+        # Get player statsheets
+        # player_statsheet_ids = [team_statsheet['playerStats'] for team_statsheet in team_statsheets]
+        # player_statsheets = mike.get_player_statsheets(player_statsheet_ids).values()
+        # ^^^                                                                                      ^^^
+        for team_statsheet in team_statsheets:
+            # Get player statsheets.
+            player_statsheet_ids = team_statsheet['playerStats']
+            player_statsheets = mike.get_player_statsheets(player_statsheet_ids).values()
+            # Get only hitters, skip currently dead players, skip pitchers -> hitters in reverb, 
+            hitter_statsheets = [statsheet for statsheet in player_statsheets if not any([statsheet['pitchesThrown'], statsheet['outsRecorded'], statsheet['walksIssued']]) and statsheet['playerId'] not in incinerated_ids]
+            # When reverb swaps a hitter <-> pitcher, we still get the correct lineup size by ignoring the pitcher! (Whose stats should be ignored for the partial game anyway!)
+            # Only count players that had a "PA" (AB+BB). This avoids counting attractors that peek out of the secret base (luckily it's very rare for a lineup player to only have sacrifice plays)
+            hitter_statsheets = [statsheet for statsheet in hitter_statsheets if statsheet['walks'] or statsheet['atBats']]
+            # Get lineup size. Count playerids instead of statsheets to account for scattered players who regained a letter this game
+            # Feedbacked players only end up with a statsheet for their final team!! Yay!!
+            hitter_ids = [statsheet['playerId'] for statsheet in hitter_statsheets]
+            # minor TODO Ways lineup_size is still miscounted (too many statsheets): carcinization, ambush immediately following an inhabit
+            # Get hitter stats
+            hitters_stats = {}
+            for hitter_statsheet in hitter_statsheets:
+                # Easy stats
+                statsheet_id = hitter_statsheet['id']
+                player_id = hitter_statsheet['playerId']
+                player_name = hitter_statsheet['name']
+                team_name = hitter_statsheet['team']
+                atbats = hitter_statsheet['atBats']
+                pas = atbats+hitter_statsheet['walks']
+                hits = hitter_statsheet['hits']
+                homeruns = hitter_statsheet['homeRuns']
+                steals = hitter_statsheet['stolenBases']
+                lineup_size = len(set(hitter_ids))
 
-                    # If a player regains a letter, it creates two stat sheets. Merge them.
-                    if player_id in hitters_stats:
-                        oldlist = hitters_stats[player_id]
-                        newlist = [statsheet_id, player_id, day, player_name, team_name, atbats+oldlist[5], pas+oldlist[6], hits+oldlist[7], homeruns+oldlist[8], steals+oldlist[9], lineup_size]
-                        hitters_stats[player_id] = newlist
-                    else:
-                        hitters_stats[player_id] = [statsheet_id, player_id, day, player_name, team_name, atbats, pas, hits, homeruns, steals, lineup_size]
-                for hitter_stats in hitters_stats.values():
-                    # logging.info(hitter_stats)
-                    sqldb.execute('''INSERT INTO hitters_statsheets 
-                        VALUES ("{0}", "{1}", {2}, "{3}", "{4}", {5}, {6}, {7}, {8}, {9}, {10})
-                        ON CONFLICT (player_id, day) DO
-                        UPDATE SET player_name="{3}", team_name="{4}", atbats={5}, pas={6}, hits={7}, homeruns={8}, steals={9}, lineup_size={10}'''.format(*hitter_stats)
-                    )
+                # If a player regains a letter, it creates two stat sheets. Merge them.
+                if player_id in hitters_stats:
+                    oldlist = hitters_stats[player_id]
+                    newlist = [statsheet_id, player_id, day, player_name, team_name, atbats+oldlist[5], pas+oldlist[6], hits+oldlist[7], homeruns+oldlist[8], steals+oldlist[9], lineup_size]
+                    hitters_stats[player_id] = newlist
+                else:
+                    hitters_stats[player_id] = [statsheet_id, player_id, day, player_name, team_name, atbats, pas, hits, homeruns, steals, lineup_size]
+            for hitter_stats in hitters_stats.values():
+                # logging.info(hitter_stats)
+                sqldb.execute('''INSERT INTO hitters_statsheets 
+                    VALUES ("{0}", "{1}", {2}, "{3}", "{4}", {5}, {6}, {7}, {8}, {9}, {10})
+                    ON CONFLICT (player_id, day) DO
+                    UPDATE SET player_name="{3}", team_name="{4}", atbats={5}, pas={6}, hits={7}, homeruns={8}, steals={9}, lineup_size={10}'''.format(*hitter_stats)
+                )
 
         # Save this day's changes to database
         sqldb.commit()
@@ -108,4 +113,6 @@ def update():
     logging.info("Statsheets updated.")
 
 if __name__ == "__main__":
+    time_start = time.time()
     update()
+    print(time.time()-time_start)

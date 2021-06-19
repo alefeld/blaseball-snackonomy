@@ -18,6 +18,10 @@ RUN pip3 install -r requirements.txt
 COPY ./*.py .
 COPY ./run_all.sh .
 RUN chmod 0744 run_all.sh
+RUN chmod 0744 run_waiter.sh
 
 # Run Cron
 CMD cron && tail -f /var/log/cron.log
+
+# Run waiter
+RUN run_waiter.sh

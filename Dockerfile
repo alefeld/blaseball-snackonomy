@@ -21,7 +21,7 @@ RUN touch waiter.log
 RUN chmod 0744 *.sh
 
 # Run Cron
-CMD cron && tail -f /var/log/cron.log
+# CMD cron && tail -f /var/log/cron.log
 
 # Run waiter
-# CMD /code/run_waiter.sh
+CMD /code/run_waiter.sh && tail -f /code/waiter.log

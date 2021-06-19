@@ -1,7 +1,6 @@
 import blaseball_mike.database as mike
 import logging
 import sqlite3
-import time
 
 def update():
     '''
@@ -113,6 +112,4 @@ def update():
     logging.info("Statsheets updated.")
 
 if __name__ == "__main__":
-    time_start = time.time()
     update()
-    print(time.time()-time_start)

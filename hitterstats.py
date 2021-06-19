@@ -47,6 +47,9 @@ def update(spreadsheet_ids):
     # Prep some fields:
     # Mods that mean a player can't earn money
     inactive_mods = set(['ELSEWHERE','SHELLED','LEGENDARY','REPLICA','NON_IDOLIZED'])
+    # ncinerated players
+    incinerated = mike.get_tributes()['players']
+    incinerated_ids = set([player['playerId'] for player in incinerated])
     # Map of team full name to shorthand
     teams = mike.get_all_teams()
     teams_shorten = {}
@@ -144,7 +147,7 @@ def update(spreadsheet_ids):
         # Check if this player has a mod preventing them from making money
         can_earn = int(not any(mod in player_mods for mod in inactive_mods))
         # Check if this player is currently in the shadows
-        if player_id in shadows or player_id in pitchers:
+        if player_id in shadows or player_id in pitchers or player_id in incinerated_ids:
             can_earn = 0
         # Check if this team is playing tomorrow
         # But if we're in the offseason still let them be shown to make D0 predictions for the next season

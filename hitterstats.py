@@ -17,8 +17,8 @@ def update(spreadsheet_ids):
 
     # Connect to spreadsheet
     credentials = gspread.service_account()
-    worksheet = credentials.open_by_key(spreadsheet_id).worksheet('Hitting Future Income')
-    # worksheet = credentials.open_by_key(spreadsheet_id).worksheet('All Hitters Test')
+    # worksheet = credentials.open_by_key(spreadsheet_id).worksheet('Hitting Future Income')
+    worksheet = credentials.open_by_key(spreadsheet_id).worksheet('All Hitters')
 
     # Get current dates
     today = sim['day']+1
@@ -33,6 +33,10 @@ def update(spreadsheet_ids):
             player_name TINYTEXT,
             team_name TINYTEXT,
             games TINYINT UNSIGNED,
+            pas SMALLINT UNSIGNED,
+            hits SMALLINT UNSIGNED,
+            homeruns SMALLINT UNSIGNED,
+            steals SMALLINT UNSIGNED,
             papg FLOAT,
             hppa FLOAT,
             hrppa FLOAT,
@@ -106,6 +110,12 @@ def update(spreadsheet_ids):
             continue
 
         # Calculate money stats
+        player_name = list(sqldb.execute('''
+            SELECT player_name FROM hitters_statsheets WHERE player_id = "{}" ORDER by day DESC LIMIT 1
+        '''.format(player_id)))[0][0]
+        team_name = list(sqldb.execute('''
+            SELECT team_name FROM hitters_statsheets WHERE player_id = "{}" ORDER by day DESC LIMIT 1
+        '''.format(player_id)))[0][0]
         games = list(sqldb.execute('''
             SELECT Count(*) FROM hitters_statsheets WHERE player_id = "{}"
         '''.format(player_id)))[0][0]
@@ -126,12 +136,6 @@ def update(spreadsheet_ids):
         '''.format(player_id)))[0][0]
         lineup_current = list(sqldb.execute('''
             SELECT lineup_size FROM hitters_statsheets WHERE player_id = "{}" ORDER by day DESC LIMIT 1
-        '''.format(player_id)))[0][0]
-        player_name = list(sqldb.execute('''
-            SELECT player_name FROM hitters_statsheets WHERE player_id = "{}" ORDER by day DESC LIMIT 1
-        '''.format(player_id)))[0][0]
-        team_name = list(sqldb.execute('''
-            SELECT team_name FROM hitters_statsheets WHERE player_id = "{}" ORDER by day DESC LIMIT 1
         '''.format(player_id)))[0][0]
 
         # if player_id == '11de4da3-8208-43ff-a1ff-0b3480a0fbf1':
@@ -154,7 +158,7 @@ def update(spreadsheet_ids):
             can_earn = 0
         # Check if this team is playing tomorrow
         # But if we're in the offseason still let them be shown to make D0 predictions for the next season
-        if not player_details[player_id]['leagueTeamId'] in teams_playing and sim['phase'] not in [0,13]:
+        if not player_details[player_id]['leagueTeamId'] in teams_playing and sim['phase'] not in [0,12,13]:
             can_earn = 0
 
         # Determine payout multiplier
@@ -179,32 +183,33 @@ def update(spreadsheet_ids):
             lineup_current = teams_lineup[team_id]
             team_name = mike.get_team(team_id)['fullName']
 
-        entry = [player_id, player_name, teams_shorten[team_name], games, papg, hppa, hrppa, sbppa, lineup_avg, lineup_current, can_earn, multiplier]
-        sqldb.execute('''INSERT INTO hitters_proj 
-            VALUES ("{0}", "{1}", "{2}", {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11})
-            ON CONFLICT (player_id) DO
-            UPDATE SET player_name="{1}", team_name="{2}", games={3}, papg={4}, hppa={5}, hrppa={6}, sbppa={7}, lineup_avg={8}, lineup_current={9}, can_earn={10}, multiplier={11}'''.format(*entry))
-        # entry = [player_id, player_name, teams_shorten[team_name], games, pas, hits, homeruns, steals, papg, hppa, hrppa, sbppa, lineup_avg, lineup_current, can_earn, multiplier]
+        # entry = [player_id, player_name, teams_shorten[team_name], games, papg, hppa, hrppa, sbppa, lineup_avg, lineup_current, can_earn, multiplier]
         # sqldb.execute('''INSERT INTO hitters_proj 
-        #     VALUES ("{0}", "{1}", "{2}", {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12}, {13}, {14}, {15})
+        #     VALUES ("{0}", "{1}", "{2}", {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11})
         #     ON CONFLICT (player_id) DO
-        #     UPDATE SET player_name="{1}", team_name="{2}", games={3}, pas={4}, hits={5}, homeruns={6}, steals={7}, papg={8}, hppa={9}, hrppa={10}, sbppa={11}, lineup_avg={12}, lineup_current={13}, can_earn={14}, multiplier={15}'''.format(*entry))
+        #     UPDATE SET player_name="{1}", team_name="{2}", games={3}, papg={4}, hppa={5}, hrppa={6}, sbppa={7}, lineup_avg={8}, lineup_current={9}, can_earn={10}, multiplier={11}'''.format(*entry))
+        entry = [player_id, player_name, teams_shorten[team_name], games, pas, hits-homeruns, homeruns, steals, papg, hppa, hrppa, sbppa, lineup_avg, lineup_current, can_earn, multiplier]
+        sqldb.execute('''INSERT INTO hitters_proj 
+            VALUES ("{0}", "{1}", "{2}", {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12}, {13}, {14}, {15})
+            ON CONFLICT (player_id) DO
+            UPDATE SET player_name="{1}", team_name="{2}", games={3}, pas={4}, hits={5}, homeruns={6}, steals={7}, papg={8}, hppa={9}, hrppa={10}, sbppa={11}, lineup_avg={12}, lineup_current={13}, can_earn={14}, multiplier={15}'''.format(*entry))
 
     # Save changes to database
     sqldb.commit()
 
     # Update spreadsheet
-    payload = [list(player) for player in sqldb.execute('''SELECT * FROM hitters_proj ORDER BY team_name''')]
-    while len(payload) < 291:
-        payload.append(['','','','','','','','','','','',''])
-    worksheet.update('A42:L', payload)
     # payload = [list(player) for player in sqldb.execute('''SELECT * FROM hitters_proj ORDER BY team_name''')]
-    # while len(payload) < 300:
-    #     payload.append(['','','','','','','','','','','','','','','',''])
-    # worksheet.update('A2:P', payload)
+    # while len(payload) < 291:
+    #     payload.append(['','','','','','','','','','','',''])
+    # worksheet.update('A42:L', payload)
+    payload = [list(player) for player in sqldb.execute('''SELECT * FROM hitters_proj ORDER BY team_name''')]
+    while len(payload) < 300:
+        payload.append(['','','','','','','','','','','','','','','',''])
+    worksheet.update('A3:P', payload)
 
     # Update the day
-    worksheet.update('A40', today)
+    # worksheet.update('A40', today)
+    worksheet.update('B1', today)
 
     logging.info("Hitter spreadsheet updated.")
 

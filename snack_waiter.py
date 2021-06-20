@@ -11,6 +11,7 @@ logging.basicConfig(format = '%(message)s',
 
 stream = SSEClient('http://blaseball.com/events/streamData', retry=1000)
 
+phase_last = -1
 season_last = -1
 day_last = -1
 for message in stream:
@@ -27,8 +28,8 @@ for message in stream:
     season = games['sim']['season']
     schedules = games['schedule']
 
-    # If this day hasn't been processed, run if games are finished
-    if day != day_last or season != season_last:
+    # If this day hasn't been processed, run if games are finished. Also run if we switch phases
+    if day != day_last or season != season_last or games['sim']['phase'] != phase_last:
         all_finished = all([schedule['finalized'] for schedule in schedules])
         if all_finished:
             logging.info("Games finished! Waiter is now running snack errands.")

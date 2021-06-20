@@ -33,7 +33,7 @@ for message in stream:
     if day != day_last or season != season_last or phase != phase_last:
         all_finished = all([schedule['finalized'] for schedule in schedules])
         if all_finished:
-            logging.info("Games finished! Waiter is now running snack errands.")
+            logging.info("Waiter is now running snack errands.")
             logging.info("Start Timestamp: {:%Y-%b-%d %H:%M:%S}".format(datetime.datetime.now()))
             update_all.update_all()
             season_last = season

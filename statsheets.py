@@ -40,7 +40,7 @@ def update():
         SELECT DISTINCT day FROM hitters_statsheets ORDER BY day
     ''')])
     today = sim['day']+1
-    days = [day for day in range(1,today) if day not in days_processed] + [today-1, today] # Always this Day and Day-1, and everything else if needed
+    days = [day for day in range(1,today) if day not in days_processed] + [today] # Always today, and everything else if needed
 
     # Get incinerated players. We'll skip these statsheets
     incinerated = mike.get_tributes()['players']

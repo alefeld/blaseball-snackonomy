@@ -68,7 +68,7 @@ def update(spreadsheet_ids):
     pitchers = [ids for team in teams_inleague for ids in team['rotation']]
     # Teams playing tomorrow to support the postseason
     teams_playing = set()
-    # if sim['phase'] in [8,10]:
+    # if sim['phase'] in [8]:
     #     playoffs = mike.get_playoff_details(season)
     #     round_id = playoffs['rounds'][0] # Just get wildcard round
     #     round = mike.get_playoff_round(round_id)
@@ -183,11 +183,7 @@ def update(spreadsheet_ids):
             lineup_current = teams_lineup[team_id]
             team_name = mike.get_team(team_id)['fullName']
 
-        # entry = [player_id, player_name, teams_shorten[team_name], games, papg, hppa, hrppa, sbppa, lineup_avg, lineup_current, can_earn, multiplier]
-        # sqldb.execute('''INSERT INTO hitters_proj 
-        #     VALUES ("{0}", "{1}", "{2}", {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11})
-        #     ON CONFLICT (player_id) DO
-        #     UPDATE SET player_name="{1}", team_name="{2}", games={3}, papg={4}, hppa={5}, hrppa={6}, sbppa={7}, lineup_avg={8}, lineup_current={9}, can_earn={10}, multiplier={11}'''.format(*entry))
+        # Add player data to database
         entry = [player_id, player_name, teams_shorten[team_name], games, pas, hits-homeruns, homeruns, steals, papg, hppa, hrppa, sbppa, lineup_avg, lineup_current, can_earn, multiplier]
         sqldb.execute('''INSERT INTO hitters_proj 
             VALUES ("{0}", "{1}", "{2}", {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12}, {13}, {14}, {15})
@@ -198,17 +194,12 @@ def update(spreadsheet_ids):
     sqldb.commit()
 
     # Update spreadsheet
-    # payload = [list(player) for player in sqldb.execute('''SELECT * FROM hitters_proj ORDER BY team_name''')]
-    # while len(payload) < 291:
-    #     payload.append(['','','','','','','','','','','',''])
-    # worksheet.update('A42:L', payload)
     payload = [list(player) for player in sqldb.execute('''SELECT * FROM hitters_proj ORDER BY team_name''')]
     while len(payload) < 300:
         payload.append(['','','','','','','','','','','','','','','',''])
     worksheet.update('A4:P', payload)
 
     # Update the day
-    # worksheet.update('A40', today)
     worksheet.update('B1', today)
 
     logging.info("Hitter spreadsheet updated.")

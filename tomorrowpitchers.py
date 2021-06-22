@@ -96,7 +96,7 @@ def update(spreadsheet_ids):
 
     # Add tomorrow's pitchers to spreadsheet
     worksheet.update('B4', pitcher_names)
-    worksheet.update('H4', multipliers)
+    worksheet.update('I4', multipliers)
     worksheet.update('F1', [[tomorrow]])
 
     logging.info("Updated tomorrow's pitchers.")

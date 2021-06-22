@@ -25,8 +25,8 @@ for message in stream:
         continue
     # This should always work, though
     games = json.loads(str(message))['value']['games']
-    day = games['sim']['day']
-    season = games['sim']['season']
+    day = games['sim']['day']+1
+    season = games['sim']['season']+1
     phase = games['sim']['season']
     schedules = games['schedule']
 

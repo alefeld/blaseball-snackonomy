@@ -184,7 +184,7 @@ def update(spreadsheet_ids):
 
         # Add player data to database
         entry = [player_id, player_name, teams_shorten[team_name], games, pas, hits-homeruns, homeruns, steals, papg, hppa, hrppa, sbppa, lineup_avg, lineup_current, can_earn, multiplier]
-        sqldb.execute('''INSERT INTO hitters_proj (player_id, player_name, teams_shorten[team_name], games, pas, hits-homeruns, homeruns, steals, papg, hppa, hrppa, sbppa, lineup_avg, lineup_current, can_earn, multiplier)
+        sqldb.execute('''INSERT INTO hitters_proj (player_id, player_name, team_name, games, pas, hits, homeruns, steals, papg, hppa, hrppa, sbppa, lineup_avg, lineup_current, can_earn, multiplier)
             VALUES ("{0}", "{1}", "{2}", {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12}, {13}, {14}, {15})
             ON CONFLICT (player_id) DO
             UPDATE SET player_name="{1}", team_name="{2}", games={3}, pas={4}, hits={5}, homeruns={6}, steals={7}, papg={8}, hppa={9}, hrppa={10}, sbppa={11}, lineup_avg={12}, lineup_current={13}, can_earn={14}, multiplier={15}'''.format(*entry))

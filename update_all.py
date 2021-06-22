@@ -1,5 +1,6 @@
 import statsheets
 import hitterstats
+import pitcherstats
 import tomorrowpitchers
 import weathersnacks
 import datetime
@@ -16,6 +17,7 @@ def update_all(spreadsheet_ids=spreadsheet_ids):
     weathersnacks.update(spreadsheet_ids)
     statsheets.update()
     hitterstats.update(spreadsheet_ids)
+    pitcherstats.update(spreadsheet_ids)
 
 if __name__ == "__main__":
     logging.basicConfig(format = '%(message)s',

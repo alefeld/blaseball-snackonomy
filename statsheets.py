@@ -38,13 +38,13 @@ def update():
             day TINYINT UNSIGNED,
             player_name TINYTEXT,
             team_name TINYTEXT,
-            outs SMALLINT UNSIGNED,
-            runs SMALLINT UNSIGNED,
             wins TINYINT UNSIGNED,
             losses TINYINT UNSIGNED,
+            outs SMALLINT UNSIGNED,
+            runs SMALLINT UNSIGNED,
             strikeouts SMALLINT UNSIGNED,
-            shutouts TINYINT UNSIGNED,
             homeruns SMALLINT UNSIGNED,
+            shutouts TINYINT UNSIGNED,
             primary key (player_id, day)
         )
     ''')
@@ -120,16 +120,16 @@ def update():
                     # If a player regains a letter, it creates two stat sheets. Merge them. For pitchers, this should basically never happen
                     if player_id in pitchers_stats:
                         oldlist = pitchers_stats[player_id]
-                        shutouts = 1 if outs+oldlist[5] >= 24 and runs+oldlist[6] == 0 else 0
-                        newlist = [statsheet_id, player_id, day, player_name, team_name, outs+oldlist[5], runs+oldlist[6], wins+oldlist[7], losses+oldlist[8], strikeouts+oldlist[9], homeruns+oldlist[10], shutouts]
+                        shutouts = 1 if outs+oldlist[7] >= 24 and runs+oldlist[8] == 0 else 0
+                        newlist = [statsheet_id, player_id, day, player_name, team_name, wins+oldlist[5], losses+oldlist[6], outs+oldlist[7], runs+oldlist[8], strikeouts+oldlist[9], homeruns+oldlist[10], shutouts]
                         pitchers_stats[player_id] = newlist
                     else:
-                        pitchers_stats[player_id] = [statsheet_id, player_id, day, player_name, team_name, outs, runs, wins, losses, strikeouts, homeruns, shutouts]
+                        pitchers_stats[player_id] = [statsheet_id, player_id, day, player_name, team_name, wins, losses, outs, runs, strikeouts, homeruns, shutouts]
             for pitcher_stats in pitchers_stats.values():
-                sqldb.execute('''INSERT INTO pitchers_statsheets 
+                sqldb.execute('''INSERT INTO pitchers_statsheets (statsheet_id, player_id, day, player_name, team_name, wins, losses, outs, runs, strikeouts, homeruns, shutouts)
                     VALUES ("{0}", "{1}", {2}, "{3}", "{4}", {5}, {6}, {7}, {8}, {9}, {10}, {11})
                     ON CONFLICT (player_id, day) DO
-                    UPDATE SET player_name="{3}", team_name="{4}", outs={5}, runs={6}, wins={7}, losses={8}, strikeouts={9}, homeruns={10}, shutouts={11}'''.format(*pitcher_stats)
+                    UPDATE SET player_name="{3}", team_name="{4}", wins={5}, losses={6}, outs={7}, runs={8}, strikeouts={9}, homeruns={10}, shutouts={11}'''.format(*pitcher_stats)
                 )
                 
             # Assemble hitter stats
@@ -157,7 +157,7 @@ def update():
                     else:
                         hitters_stats[player_id] = [statsheet_id, player_id, day, player_name, team_name, atbats, pas, hits, homeruns, steals, lineup_size]
                 for hitter_stats in hitters_stats.values():
-                    sqldb.execute('''INSERT INTO hitters_statsheets 
+                    sqldb.execute('''INSERT INTO hitters_statsheets (statsheet_id, player_id, day, player_name, team_name, atbats, pas, hits, homeruns, steals, lineup_size)
                         VALUES ("{0}", "{1}", {2}, "{3}", "{4}", {5}, {6}, {7}, {8}, {9}, {10})
                         ON CONFLICT (player_id, day) DO
                         UPDATE SET player_name="{3}", team_name="{4}", atbats={5}, pas={6}, hits={7}, homeruns={8}, steals={9}, lineup_size={10}'''.format(*hitter_stats)

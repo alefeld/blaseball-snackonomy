@@ -5,10 +5,10 @@ import sqlite3
 
 def update(spreadsheet_ids):
     '''
-    Updates all hitter stats in the future hitting income tab of this season's snack spreadsheet
+    Updates all pitcher stats in the future hitting income tab of this season's snack spreadsheet
     '''
 
-    logging.info("Updating hitter spreadsheet...")
+    logging.info("Updating pitcher spreadsheet...")
 
     # Get current season
     sim = mike.get_simulation_data()
@@ -17,7 +17,7 @@ def update(spreadsheet_ids):
 
     # Connect to spreadsheet
     credentials = gspread.service_account()
-    worksheet = credentials.open_by_key(spreadsheet_id).worksheet('All Hitters')
+    worksheet = credentials.open_by_key(spreadsheet_id).worksheet('All Pitchers')
 
     # Get current dates
     today = sim['day']+1
@@ -25,23 +25,20 @@ def update(spreadsheet_ids):
 
     # Initialize database
     sqldb = sqlite3.connect('databases/blaseball_S{}.db'.format(season))
-    sqldb.execute('''DROP TABLE IF EXISTS hitters_proj''')
+    sqldb.execute('''DROP TABLE IF EXISTS pitchers_spreadsheet''')
     sqldb.execute('''
-        CREATE TABLE IF NOT EXISTS hitters_proj (
+        CREATE TABLE IF NOT EXISTS pitchers_spreadsheet (
             player_id TINYTEXT NOT NULL,
             player_name TINYTEXT,
             team_name TINYTEXT,
             games TINYINT UNSIGNED,
-            pas SMALLINT UNSIGNED,
-            hits SMALLINT UNSIGNED,
+            wins TINYINT UNSIGNED,
+            losses TINYINT UNSIGNED,
+            outs SMALLINT UNSIGNED,
+            runs SMALLINT UNSIGNED,
+            strikeouts SMALLINT UNSIGNED,
+            shutouts TINYINT UNSIGNED,
             homeruns SMALLINT UNSIGNED,
-            steals SMALLINT UNSIGNED,
-            papg FLOAT,
-            hppa FLOAT,
-            hrppa FLOAT,
-            sbppa FLOAT,
-            lineup_avg FLOAT,
-            lineup_current TINYINT UNSIGNED,
             can_earn TINYINT UNSIGNED,
             multiplier TINYINT UNSIGNED,
             primary key (player_id)
@@ -63,8 +60,8 @@ def update(spreadsheet_ids):
     teams_inleague = [team for team in teams.values() if team['stadium']]
     # Shadows players for players who moved to shadows
     shadows = [ids for team in teams_inleague for ids in team['shadows']]
-    # Pitchers for players who reverbed/feedbacked to being a pitcher
-    pitchers = [ids for team in teams_inleague for ids in team['rotation']]
+    # Hitters for players who reverbed/feedbacked to being a pitcher
+    hitters = [ids for team in teams_inleague for ids in team['lineup']]
     # Teams playing tomorrow to support the postseason
     teams_playing = set()
     # if sim['phase'] in [8]:
@@ -81,21 +78,10 @@ def update(spreadsheet_ids):
     for game in tomorrow_games:
         teams_playing.add(tomorrow_games[game]['awayTeam'])
         teams_playing.add(tomorrow_games[game]['homeTeam'])
-    # After the election, get current team lineups to update the recommendations for D0
-    if sim['phase'] == 0:
-        teams_lineup = {}
-        for team in teams_inleague:
-            teammate_details = mike.get_player(team['lineup']).values()
-            lineup_current = 0
-            for teammate_detail in teammate_details:
-                teammate_mods = set(teammate_detail['permAttr']+teammate_detail['seasAttr']+teammate_detail['itemAttr'])
-                if not any(mod in teammate_mods for mod in ['SHELLED','ELSEWHERE']):
-                    lineup_current += 1
-            teams_lineup[team['id']] = lineup_current
 
-    # Get players
+    # Get pitchers
     player_ids = sqldb.execute('''
-        SELECT DISTINCT player_id FROM hitters_statsheets
+        SELECT DISTINCT player_id FROM pitchers_statsheets
     ''')
 
     # Get details for use later (mods, team active, etc.)
@@ -110,41 +96,35 @@ def update(spreadsheet_ids):
 
         # Calculate money stats
         player_name = list(sqldb.execute('''
-            SELECT player_name FROM hitters_statsheets WHERE player_id = "{}" ORDER by day DESC LIMIT 1
+            SELECT player_name FROM pitchers_statsheets WHERE player_id = "{}" ORDER by day DESC LIMIT 1
         '''.format(player_id)))[0][0]
         team_name = list(sqldb.execute('''
-            SELECT team_name FROM hitters_statsheets WHERE player_id = "{}" ORDER by day DESC LIMIT 1
+            SELECT team_name FROM pitchers_statsheets WHERE player_id = "{}" ORDER by day DESC LIMIT 1
         '''.format(player_id)))[0][0]
         games = list(sqldb.execute('''
-            SELECT Count(*) FROM hitters_statsheets WHERE player_id = "{}"
+            SELECT Count(*) FROM pitchers_statsheets WHERE player_id = "{}"
         '''.format(player_id)))[0][0]
-        pas = list(sqldb.execute('''
-            SELECT SUM(pas) FROM hitters_statsheets WHERE player_id = "{}"
+        wins = list(sqldb.execute('''
+            SELECT SUM(wins) FROM pitchers_statsheets WHERE player_id = "{}"
         '''.format(player_id)))[0][0]
-        hits = list(sqldb.execute('''
-            SELECT SUM(hits) FROM hitters_statsheets WHERE player_id = "{}"
+        losses = list(sqldb.execute('''
+            SELECT SUM(losses) FROM pitchers_statsheets WHERE player_id = "{}"
+        '''.format(player_id)))[0][0]
+        outs = list(sqldb.execute('''
+            SELECT SUM(outs) FROM pitchers_statsheets WHERE player_id = "{}"
+        '''.format(player_id)))[0][0]
+        runs = list(sqldb.execute('''
+            SELECT SUM(runs) FROM pitchers_statsheets WHERE player_id = "{}"
+        '''.format(player_id)))[0][0]
+        strikeouts = list(sqldb.execute('''
+            SELECT SUM(strikeouts) FROM pitchers_statsheets WHERE player_id = "{}"
         '''.format(player_id)))[0][0]
         homeruns = list(sqldb.execute('''
-            SELECT SUM(homeruns) FROM hitters_statsheets WHERE player_id = "{}"
+            SELECT SUM(homeruns) FROM pitchers_statsheets WHERE player_id = "{}"
         '''.format(player_id)))[0][0]
-        steals = list(sqldb.execute('''
-            SELECT SUM(steals) FROM hitters_statsheets WHERE player_id = "{}"
+        shutouts = list(sqldb.execute('''
+            SELECT SUM(shutouts) FROM pitchers_statsheets WHERE player_id = "{}"
         '''.format(player_id)))[0][0]
-        lineup = list(sqldb.execute('''
-            SELECT SUM(lineup_size) FROM hitters_statsheets WHERE player_id = "{}"
-        '''.format(player_id)))[0][0]
-        lineup_current = list(sqldb.execute('''
-            SELECT lineup_size FROM hitters_statsheets WHERE player_id = "{}" ORDER by day DESC LIMIT 1
-        '''.format(player_id)))[0][0]
-
-        # if player_id == '11de4da3-8208-43ff-a1ff-0b3480a0fbf1':
-        #     logging.info(pas/games)
-        #     logging.info(lineup/games)
-        #     logging.info(hits/pas)
-        #     logging.info(homeruns/pas)
-        #     logging.info(steals/pas)
-        #     quit()
-        # logging.info([player_name, atbats, pas, hits-homeruns, homeruns, steals])
 
         # Get current player mods
         player_mods = player_details[player_id]['permAttr']+player_details[player_id]['seasAttr']+player_details[player_id]['itemAttr']
@@ -152,8 +132,8 @@ def update(spreadsheet_ids):
         # Check if this player can earn any money next game
         # Check if this player has a mod preventing them from making money
         can_earn = int(not any(mod in player_mods for mod in inactive_mods))
-        # Check if this player is currently in the shadows, pitching, or incinerated
-        if player_id in shadows or player_id in pitchers or player_id in incinerated_ids:
+        # Check if this player is currently in the shadows, hitting, or incinerated
+        if player_id in shadows or player_id in hitters or player_id in incinerated_ids:
             can_earn = 0
         # Check if this team is playing tomorrow
         # But if we're in the offseason still let them be shown to make D0 predictions for the next season
@@ -167,41 +147,31 @@ def update(spreadsheet_ids):
         if 'CREDIT_TO_THE_TEAM' in player_mods:
             multiplier = 5
 
-        # Get earning stats
-        hppa = (hits-homeruns)/pas # Homeruns don't count for seeds
-        hrppa = homeruns/pas
-        sbppa = steals/pas
-
-        # Calculate some other stats
-        papg = pas/games
-        lineup_avg = lineup/games
-
         # Finally, if we're between the election and D0, get updated teams and lineup sizes post-election
         if sim['phase'] == 0:
             team_id = player_details[player_id]['leagueTeamId']
-            lineup_current = teams_lineup[team_id]
             team_name = mike.get_team(team_id)['fullName']
 
         # Add player data to database
-        entry = [player_id, player_name, teams_shorten[team_name], games, pas, hits-homeruns, homeruns, steals, papg, hppa, hrppa, sbppa, lineup_avg, lineup_current, can_earn, multiplier]
-        sqldb.execute('''INSERT INTO hitters_proj (player_id, player_name, teams_shorten[team_name], games, pas, hits-homeruns, homeruns, steals, papg, hppa, hrppa, sbppa, lineup_avg, lineup_current, can_earn, multiplier)
-            VALUES ("{0}", "{1}", "{2}", {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12}, {13}, {14}, {15})
+        entry = [player_id, player_name, teams_shorten[team_name], games, wins, losses, outs, runs, strikeouts, homeruns, shutouts, can_earn, multiplier]
+        sqldb.execute('''INSERT INTO pitchers_spreadsheet (player_id, player_name, team_name, games, wins, losses, outs, runs, strikeouts, homeruns, shutouts, can_earn, multiplier)
+            VALUES ("{0}", "{1}", "{2}", {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12})
             ON CONFLICT (player_id) DO
-            UPDATE SET player_name="{1}", team_name="{2}", games={3}, pas={4}, hits={5}, homeruns={6}, steals={7}, papg={8}, hppa={9}, hrppa={10}, sbppa={11}, lineup_avg={12}, lineup_current={13}, can_earn={14}, multiplier={15}'''.format(*entry))
+            UPDATE SET player_name="{1}", team_name="{2}", games={3}, wins={4}, losses={5}, outs={6}, runs={7}, strikeouts={8}, homeruns={9}, shutouts={10}, can_earn={11}, multiplier={12}'''.format(*entry))
 
     # Save changes to database
     sqldb.commit()
 
     # Update spreadsheet
-    payload = [list(player) for player in sqldb.execute('''SELECT * FROM hitters_proj ORDER BY team_name''')]
-    while len(payload) < 300:
-        payload.append(['','','','','','','','','','','','','','','',''])
+    payload = [list(player) for player in sqldb.execute('''SELECT * FROM pitchers_spreadsheet ORDER BY team_name''')]
+    while len(payload) < 125:
+        payload.append(['','','','','','','','','','','','',''])
     worksheet.update('A4:P', payload)
 
     # Update the day
     worksheet.update('B1', today)
 
-    logging.info("Hitter spreadsheet updated.")
+    logging.info("Pitcher spreadsheet updated.")
 
 if __name__ == "__main__":
     spreadsheet_ids = {

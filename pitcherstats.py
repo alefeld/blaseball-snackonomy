@@ -37,8 +37,8 @@ def update(spreadsheet_ids):
             outs SMALLINT UNSIGNED,
             runs SMALLINT UNSIGNED,
             strikeouts SMALLINT UNSIGNED,
-            shutouts TINYINT UNSIGNED,
             homeruns SMALLINT UNSIGNED,
+            shutouts TINYINT UNSIGNED,
             can_earn TINYINT UNSIGNED,
             multiplier TINYINT UNSIGNED,
             primary key (player_id)

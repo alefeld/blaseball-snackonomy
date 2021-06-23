@@ -1,6 +1,7 @@
 import blaseball_mike.database as mike
 import gspread
 import logging
+import requests
 
 ''' phases
             e[e.Preseason = 1] = "Preseason",
@@ -51,26 +52,37 @@ def update(spreadsheet_ids):
     # mike uses 1-indexed seasons and days as input
     # blaseball.com returns 0-indexed seasons and days
     games = mike.get_games(season, tomorrow)
-    # games = mike.get_games(season, tomorrow-1)
-    # pitcher_names = []
-    # for game in games:
-    #     pitcher_names.append(games[game]['homePitcherName'])
-    #     pitcher_names.append(games[game]['awayPitcherName'])
-    # logging.info(pitcher_names)
-    # quit()
+
+    # Get stadiums for determining if pitchers are faxable
+    stadiums = {}
+    stadiums_query = requests.get('https://api.sibr.dev/chronicler/v2/entities?type=stadium').json()['items']
+    for stadium in stadiums_query:
+        stadiums[stadium['data']['id']] = stadium['data']
 
     # Get pitchers
-    pitcher_ids = []
-    for game in games:
-        pitcher_ids.append(games[game]['homePitcher'])
-        pitcher_ids.append(games[game]['awayPitcher'])
+    pitchers = {}
+    for game in games.values():
+        stadium_id = mike.get_team(game['homeTeam'])['stadium']
+        # Pitcher is faxable if it is a home game for them, their stadium has fax machines, and the weather isn't Sun 2 or Black Hole
+        fax_machine = True if 'FAX_MACHINE' in stadiums[stadium_id]['mods'] and game['weather'] not in [1,14] else False
+        pitchers[game['homePitcher']] = {
+            'name': game['homePitcherName'],
+            'odds': game['homeOdds'],
+            'faxable': fax_machine,
+            'multiplier': 0
+        }
+        pitchers[game['awayPitcher']] = {
+            'name': game['awayPitcherName'],
+            'odds': game['awayOdds'],
+            'faxable': False,
+            'multiplier': 0
+        }
 
-    # Get current pitcher names
-    pitchers = []
-    pitcher_details = mike.get_player(pitcher_ids).values()
-    for pitcher_detail in pitcher_details:
-        player_mods = pitcher_detail['permAttr']+pitcher_detail['seasAttr']+pitcher_detail['itemAttr']
+    # Get pitcher payout multiplier
+    pitcher_details = mike.get_player(list(pitchers.keys()))
+    for pitcher_id in pitcher_details:
         # Determine payout multiplier
+        player_mods = pitcher_details[pitcher_id]['permAttr']+pitcher_details[pitcher_id]['seasAttr']+pitcher_details[pitcher_id]['itemAttr']
         multiplier = 1
         if 'DOUBLE_PAYOUTS' in player_mods:
             multiplier = 2
@@ -81,22 +93,29 @@ def update(spreadsheet_ids):
         can_earn = int(not any(mod in player_mods for mod in inactive_mods))
         if not can_earn:
             multiplier = 0
-        pitchers.append((pitcher_detail['name'], multiplier))
+        pitchers[pitcher_id]['multiplier'] = multiplier
 
     # Sort by multiplier
-    pitchers.sort(key = lambda x: x[1], reverse=True)
-    pitcher_names = [[pitcher[0]] for pitcher in pitchers]
-    multipliers = [[pitcher[1]] for pitcher in pitchers]
+    pitchers_lists = [list(pitcher.values()) for pitcher in pitchers.values()]
+    pitchers_lists.sort(key = lambda x: x[3], reverse=True)
 
-    # Add empty entries to clear out old pitchers during the playoffs
-    while len(pitcher_names) < 24:
-        pitcher_names.append([''])
-    while len(multipliers) < 24:
-        multipliers.append([''])
+    # Pad to 24 pitchers
+    while len(pitchers_lists) < 24:
+        pitchers_lists.append(['','','',''])
+
+    # Get individual columns
+    pitcher_names = [[pitcher[0]] for pitcher in pitchers_lists]
+    pitcher_other = [pitcher[1:] for pitcher in pitchers_lists]
+    # multipliers = [[pitcher[1]] for pitcher in pitchers_lists]
+    # odds = [[pitcher[2]] for pitcher in pitchers_lists]
+    # faxable = [[pitcher[3]] for pitcher in pitchers_lists]
 
     # Add tomorrow's pitchers to spreadsheet
     worksheet.update('B4', pitcher_names)
-    worksheet.update('I4', multipliers)
+    worksheet.update('I4:K', pitcher_other)
+    # worksheet.update('I4', odds)
+    # worksheet.update('J4', faxable)
+    # worksheet.update('K4', multipliers)
     worksheet.update('F1', [[tomorrow]])
 
     logging.info("Updated tomorrow's pitchers.")

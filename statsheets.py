@@ -135,6 +135,9 @@ def update():
             # Assemble hitter stats
             for hitter_statsheets in [hitter_statsheets_home, hitter_statsheets_away]:
                 hitter_ids = [statsheet['playerId'] for statsheet in hitter_statsheets]
+                # Ignore KLONGs (Kennedy Loser Nonexistent Ghosts/New Guys). These ghosts are incinerated but won't show up as such.
+                if hitter_statsheets[0]['team'] == 'Baltimore Crabs':
+                    hitter_ids = list(mike.get_player(hitter_ids).keys())
                 hitters_stats = {}
                 for hitter_statsheet in hitter_statsheets:
                     # Easy stats

@@ -87,19 +87,22 @@ def update():
             pitcher_statsheets_teams = {}
             pitcher_statsheets_teams['home'] = [statsheet for statsheet in player_statsheets_home if any([statsheet['outsRecorded'], statsheet['walksIssued']])]
             pitcher_statsheets_teams['away'] = [statsheet for statsheet in player_statsheets_away if any([statsheet['outsRecorded'], statsheet['walksIssued']])]
-            # Get only hitters, skip currently dead players, skip pitchers -> hitters in reverb, 
-            hitter_statsheets_home = [statsheet for statsheet in player_statsheets_home if not any([statsheet['pitchesThrown'], statsheet['outsRecorded'], statsheet['walksIssued']]) and statsheet['playerId'] not in incinerated_ids]
-            hitter_statsheets_away = [statsheet for statsheet in player_statsheets_away if not any([statsheet['pitchesThrown'], statsheet['outsRecorded'], statsheet['walksIssued']]) and statsheet['playerId'] not in incinerated_ids]
+            # Get only hitters. Also skips pitchers -> hitters in reverb, but it's a small price to pay
+            hitter_statsheets_home = [statsheet for statsheet in player_statsheets_home if not any([statsheet['pitchesThrown'], statsheet['outsRecorded'], statsheet['walksIssued']])]
+            hitter_statsheets_away = [statsheet for statsheet in player_statsheets_away if not any([statsheet['pitchesThrown'], statsheet['outsRecorded'], statsheet['walksIssued']])]
+            # Determine homeruns given up by pitchers
+            homeruns_allowed = {}
+            homeruns_allowed['away'] = sum([statsheet['homeRuns'] for statsheet in hitter_statsheets_home])
+            homeruns_allowed['home'] = sum([statsheet['homeRuns'] for statsheet in hitter_statsheets_away])
             # When reverb swaps a hitter <-> pitcher, we still get the correct lineup size by ignoring the pitcher! (Whose stats should be ignored for the partial game anyway!)
             # Only count players that had a "PA" (AB+BB). This avoids counting attractors that peek out of the secret base (luckily it's very rare for a lineup player to only have sacrifice plays)
             hitter_statsheets_home = [statsheet for statsheet in hitter_statsheets_home if statsheet['walks'] or statsheet['atBats']]
             hitter_statsheets_away = [statsheet for statsheet in hitter_statsheets_away if statsheet['walks'] or statsheet['atBats']]
+            # Skip currently dead players. We don't care about them for the economy, and we've already counted homeruns for pitchers
+            hitter_statsheets_home = [statsheet for statsheet in hitter_statsheets_home if statsheet['playerId'] not in incinerated_ids]
+            hitter_statsheets_away = [statsheet for statsheet in hitter_statsheets_away if statsheet['playerId'] not in incinerated_ids]
 
             # Assemble pitcher stats
-            # Determine homeruns given up
-            homeruns_allowed = {}
-            homeruns_allowed['away'] = sum([statsheet['homeRuns'] for statsheet in hitter_statsheets_home])
-            homeruns_allowed['home'] = sum([statsheet['homeRuns'] for statsheet in hitter_statsheets_away])
             pitchers_stats = {}
             for team in pitcher_statsheets_teams:
                 for pitcher_statsheet in pitcher_statsheets_teams[team]:
@@ -134,10 +137,12 @@ def update():
                 
             # Assemble hitter stats
             for hitter_statsheets in [hitter_statsheets_home, hitter_statsheets_away]:
-                hitter_ids = [statsheet['playerId'] for statsheet in hitter_statsheets]
-                # Ignore KLONGs (Kennedy Loser Nonexistent Ghosts/New Guys). These ghosts are incinerated but won't show up as such.
+                # Get this team's lineup size for today
+                lineup_size = len(hitter_statsheets)
+                # For the Crabs, Ignore KLONGs (Kennedy Loser Nonexistent Ghosts/New Guys). These ghosts are incinerated but won't show up as such.
                 if hitter_statsheets[0]['team'] == 'Baltimore Crabs':
-                    hitter_ids = list(mike.get_player(hitter_ids).keys())
+                    hitter_ids = [statsheet['playerId'] for statsheet in hitter_statsheets]
+                    lineup_size = len(mike.get_player(hitter_ids).keys())
                 hitters_stats = {}
                 for hitter_statsheet in hitter_statsheets:
                     # Easy stats
@@ -150,7 +155,6 @@ def update():
                     hits = hitter_statsheet['hits']
                     homeruns = hitter_statsheet['homeRuns']
                     steals = hitter_statsheet['stolenBases']
-                    lineup_size = len(set(hitter_ids))
 
                     # If a player regains a letter, it creates two stat sheets. Merge them.
                     if player_id in hitters_stats:

@@ -49,7 +49,7 @@ def update(spreadsheet_ids):
     # Consumers
     events_consumers = mike.get_feed_global(season=season, limit=2000, type_=67)
     # url = https://www.blaseball.com/database/feed/global?limit=500&season=18&type=67
-    attacks = len([event for event in events_consumers if "consumers" in event['description'].lower()])
+    attacks = len([event for event in events_consumers if "consumer" in event['description'].lower()])
 
     # Update sheet
     payload = [

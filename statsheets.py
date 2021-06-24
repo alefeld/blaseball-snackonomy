@@ -90,7 +90,7 @@ def update():
             # Get only hitters. Also skips pitchers -> hitters in reverb, but it's a small price to pay
             hitter_statsheets_home = [statsheet for statsheet in player_statsheets_home if not any([statsheet['pitchesThrown'], statsheet['outsRecorded'], statsheet['walksIssued']])]
             hitter_statsheets_away = [statsheet for statsheet in player_statsheets_away if not any([statsheet['pitchesThrown'], statsheet['outsRecorded'], statsheet['walksIssued']])]
-            # Determine homeruns given up by pitchers
+            # Determine homeruns given up by pitchers before we filter out other people
             homeruns_allowed = {}
             homeruns_allowed['away'] = sum([statsheet['homeRuns'] for statsheet in hitter_statsheets_home])
             homeruns_allowed['home'] = sum([statsheet['homeRuns'] for statsheet in hitter_statsheets_away])
@@ -98,7 +98,7 @@ def update():
             # Only count players that had a "PA" (AB+BB). This avoids counting attractors that peek out of the secret base (luckily it's very rare for a lineup player to only have sacrifice plays)
             hitter_statsheets_home = [statsheet for statsheet in hitter_statsheets_home if statsheet['walks'] or statsheet['atBats']]
             hitter_statsheets_away = [statsheet for statsheet in hitter_statsheets_away if statsheet['walks'] or statsheet['atBats']]
-            # Skip currently dead players. We don't care about them for the economy, and we've already counted homeruns for pitchers
+            # Skip currently dead players. This purely to avoid ghosts. Bad news is we don't count players incinerated this game for lineup size
             hitter_statsheets_home = [statsheet for statsheet in hitter_statsheets_home if statsheet['playerId'] not in incinerated_ids]
             hitter_statsheets_away = [statsheet for statsheet in hitter_statsheets_away if statsheet['playerId'] not in incinerated_ids]
 

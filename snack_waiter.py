@@ -16,9 +16,8 @@ day_last = -1
 siesta_processed = False
 # During siesta the stream breaks, so use try/except to retry a few minute later
 while True:
-    stream = SSEClient('http://blaseball.com/events/streamData')
-
     try:
+        stream = SSEClient('http://blaseball.com/events/streamData')
         for message in stream:
             # At seemingly fixed intervals, the stream sends an empty message
             if not str(message):

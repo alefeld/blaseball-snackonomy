@@ -54,4 +54,4 @@ while True:
     except Exception as error:
         logging.error(error)
         # Wait five minutes if the stream breaks
-        time.wait(300)
+        time.sleep(300)

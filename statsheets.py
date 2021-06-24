@@ -58,6 +58,9 @@ def update():
     ''')])
     today = sim['day']+1
     days = [day for day in range(1,today) if day not in days_processed] + [today] # Always today, and everything else if needed
+    # If we're in siesta, don't process "today" because "today" is actually tomorrow
+    if sim['phase'] in [3,5]:
+        days.remove(today)
 
     # Get incinerated players. We'll skip these statsheets
     incinerated = mike.get_tributes()['players']

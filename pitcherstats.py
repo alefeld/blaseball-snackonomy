@@ -54,8 +54,8 @@ def update(spreadsheet_ids):
     # Map of team full name to shorthand
     teams = mike.get_all_teams()
     teams_shorten = {}
-    for team in teams:
-        teams_shorten[teams[team]['fullName']] = teams[team]['shorthand']
+    for team_id in teams:
+        teams_shorten[team_id] = teams[team_id]['shorthand']
     # List of teams in league (ignore historical/coffee cup teams)
     teams_inleague = [team for team in teams.values() if team['stadium']]
     # Shadows players for players who moved to shadows
@@ -147,13 +147,11 @@ def update(spreadsheet_ids):
         if 'CREDIT_TO_THE_TEAM' in player_mods:
             multiplier = 5
 
-        # Finally, if we're between the election and D0, get updated teams and lineup sizes post-election
-        if sim['phase'] == 0:
-            team_id = player_details[player_id]['leagueTeamId']
-            team_name = mike.get_team(team_id)['fullName']
+        # Get each player's current team's shortname (abbreviation)
+        team_abbr = teams_shorten[player_details[player_id]['leagueTeamId']]
 
         # Add player data to database
-        entry = [player_id, player_name, teams_shorten[team_name], games, wins, losses, outs, runs, strikeouts, homeruns, shutouts, can_earn, multiplier]
+        entry = [player_id, player_name, team_abbr, games, wins, losses, outs, runs, strikeouts, homeruns, shutouts, can_earn, multiplier]
         sqldb.execute('''INSERT INTO pitchers_spreadsheet (player_id, player_name, team_name, games, wins, losses, outs, runs, strikeouts, homeruns, shutouts, can_earn, multiplier)
             VALUES ("{0}", "{1}", "{2}", {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12})
             ON CONFLICT (player_id) DO

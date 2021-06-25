@@ -209,6 +209,7 @@ def update(spreadsheet_ids):
 
         # Get each player's current team's shortname (abbreviation)
         team_abbr = teams_shorten[player_details[player_id]['leagueTeamId']]
+        print(team_abbr)
 
         # Finally, if we're between the election and D0, get updated lineup sizes post-election
         if sim['phase'] == 0:
@@ -222,6 +223,7 @@ def update(spreadsheet_ids):
             ON CONFLICT (player_id) DO
             UPDATE SET player_name="{1}", team_name="{2}", games={3}, pas={4}, hits={5}, homeruns={6}, steals={7}, papg={8}, hppa={9}, hrppa={10}, sbppa={11}, lineup_avg={12}, lineup_current={13}, can_earn={14}, multiplier={15}'''.format(*entry))
 
+    quit()
     # Save changes to database
     sqldb.commit()
 

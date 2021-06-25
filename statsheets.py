@@ -143,7 +143,7 @@ def update():
                 # Get this team's lineup size for today
                 lineup_size = len(hitter_statsheets)
                 # For the Crabs, Ignore KLONGs (Kennedy Loser Nonexistent Ghosts/New Guys). These ghosts are incinerated but won't show up as such.
-                if hitter_statsheets[0]['team'] == 'Baltimore Crabs':
+                if hitter_statsheets[0]['teamId'] == '8d87c468-699a-47a8-b40d-cfb73a5660ad':
                     hitter_ids = [statsheet['playerId'] for statsheet in hitter_statsheets]
                     lineup_size = len(mike.get_player(hitter_ids).keys())
                 hitters_stats = {}

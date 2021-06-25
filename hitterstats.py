@@ -1,7 +1,10 @@
 import blaseball_mike.database as mike
 import gspread
+import json
 import logging
 import sqlite3
+from sseclient import SSEClient
+
 
 def update(spreadsheet_ids):
     '''
@@ -67,7 +70,33 @@ def update(spreadsheet_ids):
     pitchers = [ids for team in teams_inleague for ids in team['rotation']]
     # Teams playing tomorrow to support the postseason
     teams_playing = set()
-    # if sim['phase'] in [8]:
+    # After the brackets have been decided but before the first round begins, it's complicated
+    if sim['phase'] in [8]:
+        # Get full streamdata
+        stream = SSEClient('http://blaseball.com/events/streamData')
+        moveon = -10
+        for message in stream:
+            while moveon < 1:
+                # At seemingly fixed intervals, the stream sends an empty message
+                if not str(message):
+                    moveon += 1
+                    continue
+                data = json.loads(str(message))
+                # Sometimes the stream just sends fights
+                if 'games' not in data['value']:
+                    moveon += 1
+                    continue
+                # This should always work, though
+                games = json.loads(str(message))['value']['games']
+                games_tomorrow = games['tomorrowSchedule']
+                # Log this info since I don't actually know what it looks like
+                logging.info(games_tomorrow)
+                for game_tomorrow in games_tomorrow:
+                    teams_playing.add(game_tomorrow['awayTeam'])
+                    teams_playing.add(game_tomorrow['homeTeam'])
+                moveon = 1
+            else:
+                break
     #     playoffs = mike.get_playoff_details(season)
     #     round_id = playoffs['rounds'][0] # Just get wildcard round
     #     round = mike.get_playoff_round(round_id)
@@ -77,10 +106,12 @@ def update(spreadsheet_ids):
     #         teams_playing.add(matchup_wildcard['awayTeam'])
     #     # This only has the overbracket teams... Can't find an endpoint for underbracket :/
     # else:
-    tomorrow_games = mike.get_games(season, tomorrow)
-    for game in tomorrow_games:
-        teams_playing.add(tomorrow_games[game]['awayTeam'])
-        teams_playing.add(tomorrow_games[game]['homeTeam'])
+    # During the season and while postseason is in progress, we can just get tomorrow's games
+    else:
+        tomorrow_games = mike.get_games(season, tomorrow)
+        for game in tomorrow_games:
+            teams_playing.add(tomorrow_games[game]['awayTeam'])
+            teams_playing.add(tomorrow_games[game]['homeTeam'])
     # After the election, get current team lineups to update the recommendations for D0
     if sim['phase'] == 0:
         teams_lineup = {}

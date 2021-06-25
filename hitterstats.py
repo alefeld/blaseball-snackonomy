@@ -87,7 +87,7 @@ def update(spreadsheet_ids):
                 continue
             # At this point, it's safe to process it
             games = json.loads(str(message))['value']['games']
-            brackets = games['postseasons']
+            brackets = games.get('postseasons')
             if not brackets:
                 continue
             for bracket in brackets:

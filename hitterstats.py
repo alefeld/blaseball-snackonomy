@@ -124,7 +124,7 @@ def update(spreadsheet_ids):
                 if not any(mod in teammate_mods for mod in ['SHELLED','ELSEWHERE']):
                     lineup_current += 1
             teams_lineup[team['id']] = lineup_current
-    logging.info("test1")
+
     # Get players
     player_ids = sqldb.execute('''
         SELECT DISTINCT player_id FROM hitters_statsheets
@@ -135,7 +135,6 @@ def update(spreadsheet_ids):
     player_details = mike.get_player(player_ids)
 
     for player_id in player_ids:
-        logging.info("test2")
 
         # If this player can't be gotten, like, say a ghost inhabits someone but the ghost doesn't technically EXIST...
         if player_id not in player_details:
@@ -208,11 +207,9 @@ def update(spreadsheet_ids):
         # Calculate some other stats
         papg = pas/games
         lineup_avg = lineup/games
-        logging.info("test3")
 
         # Get each player's current team's shortname (abbreviation)
-        team_abbr = teams_shorten[player_details[player_id]['leagueTeamId']]
-        logging.info("test4")
+        team_abbr = teams_shorten.get(player_details[player_id]['leagueTeamId'], 'NULL')
 
         # Finally, if we're between the election and D0, get updated lineup sizes post-election
         if sim['phase'] == 0:
@@ -225,7 +222,6 @@ def update(spreadsheet_ids):
             VALUES ("{0}", "{1}", "{2}", {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12}, {13}, {14}, {15})
             ON CONFLICT (player_id) DO
             UPDATE SET player_name="{1}", team_name="{2}", games={3}, pas={4}, hits={5}, homeruns={6}, steals={7}, papg={8}, hppa={9}, hrppa={10}, sbppa={11}, lineup_avg={12}, lineup_current={13}, can_earn={14}, multiplier={15}'''.format(*entry))
-    logging.info("test5")
 
     # Save changes to database
     sqldb.commit()

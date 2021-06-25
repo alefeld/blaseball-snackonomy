@@ -148,7 +148,7 @@ def update(spreadsheet_ids):
             multiplier = 5
 
         # Get each player's current team's shortname (abbreviation)
-        team_abbr = teams_shorten[player_details[player_id]['leagueTeamId']]
+        team_abbr = teams_shorten.get(player_details[player_id]['leagueTeamId'], 'NULL')
 
         # Add player data to database
         entry = [player_id, player_name, team_abbr, games, wins, losses, outs, runs, strikeouts, homeruns, shutouts, can_earn, multiplier]

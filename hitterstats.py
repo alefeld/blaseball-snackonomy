@@ -87,6 +87,7 @@ def update(spreadsheet_ids):
                 continue
             # At this point, it's safe to process it
             games = json.loads(str(message))['value']['games']
+            # ... Maybe
             brackets = games.get('postseasons')
             if not brackets:
                 continue
@@ -97,16 +98,6 @@ def update(spreadsheet_ids):
                         teams_playing.add(matchup['awayTeam'])
                         teams_playing.add(matchup['homeTeam'])
             break
-    #     playoffs = mike.get_playoff_details(season)
-    #     round_id = playoffs['rounds'][0] # Just get wildcard round
-    #     round = mike.get_playoff_round(round_id)
-    #     matchups_wildcard_ids = [round['matchups'][1],round['matchups'][5]]
-    #     for matchup_wildcard in mike.get_playoff_matchups(matchups_wildcard_ids).values():
-    #         teams_playing.add(matchup_wildcard['homeTeam'])
-    #         teams_playing.add(matchup_wildcard['awayTeam'])
-    #     # This only has the overbracket teams... Can't find an endpoint for underbracket :/
-    # else:
-    # During the season and while postseason is in progress, we can just get tomorrow's games
     else:
         tomorrow_games = mike.get_games(season, tomorrow)
         for game in tomorrow_games:

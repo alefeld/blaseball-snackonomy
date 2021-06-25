@@ -1,7 +1,9 @@
 import blaseball_mike.database as mike
 import gspread
+import json
 import logging
 import sqlite3
+from sseclient import SSEClient
 
 def update(spreadsheet_ids):
     '''
@@ -64,20 +66,39 @@ def update(spreadsheet_ids):
     hitters = [ids for team in teams_inleague for ids in team['lineup']]
     # Teams playing tomorrow to support the postseason
     teams_playing = set()
-    # if sim['phase'] in [8]:
-    #     playoffs = mike.get_playoff_details(season)
-    #     round_id = playoffs['rounds'][0] # Just get wildcard round
-    #     round = mike.get_playoff_round(round_id)
-    #     matchups_wildcard_ids = [round['matchups'][1],round['matchups'][5]]
-    #     for matchup_wildcard in mike.get_playoff_matchups(matchups_wildcard_ids).values():
-    #         teams_playing.add(matchup_wildcard['homeTeam'])
-    #         teams_playing.add(matchup_wildcard['awayTeam'])
-    #     # This only has the overbracket teams... Can't find an endpoint for underbracket :/
-    # else:
-    tomorrow_games = mike.get_games(season, tomorrow)
-    for game in tomorrow_games:
-        teams_playing.add(tomorrow_games[game]['awayTeam'])
-        teams_playing.add(tomorrow_games[game]['homeTeam'])
+    # After the brackets have been decided but before the first round begins, it's complicated
+    if sim['phase'] in [8]:
+        logging.info("Pre-Postseason detected. Getting streamData.")
+        # Get full streamdata
+        stream = SSEClient('http://blaseball.com/events/streamData')
+        for message in stream:
+            # At seemingly fixed intervals, the stream sends an empty message
+            if not str(message):
+                moveon += 1
+                continue
+            data = json.loads(str(message))
+            # Sometimes the stream just sends fights
+            if 'games' not in data['value']:
+                moveon += 1
+                continue
+            # At this point, it's safe to process it
+            games = json.loads(str(message))['value']['games']
+            brackets = games.get('postseasons')
+            # ... Maybe
+            if not brackets:
+                continue
+            for bracket in brackets:
+                matchups = bracket['allMatchups']
+                for matchup in matchups:
+                    if matchup['awayTeam'] and matchup['homeTeam']:
+                        teams_playing.add(matchup['awayTeam'])
+                        teams_playing.add(matchup['homeTeam'])
+            break
+    else:
+        tomorrow_games = mike.get_games(season, tomorrow)
+        for game in tomorrow_games:
+            teams_playing.add(tomorrow_games[game]['awayTeam'])
+            teams_playing.add(tomorrow_games[game]['homeTeam'])
 
     # Get pitchers
     player_ids = sqldb.execute('''

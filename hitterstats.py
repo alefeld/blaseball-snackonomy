@@ -72,6 +72,7 @@ def update(spreadsheet_ids):
     teams_playing = set()
     # After the brackets have been decided but before the first round begins, it's complicated
     if sim['phase'] in [8]:
+        logging.info("Pre-Postseason detected. Getting streamData.")
         # Get full streamdata
         stream = SSEClient('http://blaseball.com/events/streamData')
         moveon = -10

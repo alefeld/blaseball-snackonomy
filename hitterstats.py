@@ -88,6 +88,8 @@ def update(spreadsheet_ids):
             # At this point, it's safe to process it
             games = json.loads(str(message))['value']['games']
             brackets = games['postseasons']
+            if not brackets:
+                continue
             for bracket in brackets:
                 matchups = bracket['allMatchups']
                 for matchup in matchups:
@@ -220,7 +222,6 @@ def update(spreadsheet_ids):
             ON CONFLICT (player_id) DO
             UPDATE SET player_name="{1}", team_name="{2}", games={3}, pas={4}, hits={5}, homeruns={6}, steals={7}, papg={8}, hppa={9}, hrppa={10}, sbppa={11}, lineup_avg={12}, lineup_current={13}, can_earn={14}, multiplier={15}'''.format(*entry))
 
-    quit()
     # Save changes to database
     sqldb.commit()
 

@@ -75,29 +75,26 @@ def update(spreadsheet_ids):
         logging.info("Pre-Postseason detected. Getting streamData.")
         # Get full streamdata
         stream = SSEClient('http://blaseball.com/events/streamData')
-        moveon = -10
         for message in stream:
-            while moveon < 1:
-                # At seemingly fixed intervals, the stream sends an empty message
-                if not str(message):
-                    moveon += 1
-                    continue
-                data = json.loads(str(message))
-                # Sometimes the stream just sends fights
-                if 'games' not in data['value']:
-                    moveon += 1
-                    continue
-                # This should always work, though
-                games = json.loads(str(message))['value']['games']
-                games_tomorrow = games['tomorrowSchedule']
-                # Log this info since I don't actually know what it looks like
-                logging.info(games_tomorrow)
-                for game_tomorrow in games_tomorrow:
-                    teams_playing.add(game_tomorrow['awayTeam'])
-                    teams_playing.add(game_tomorrow['homeTeam'])
-                moveon = 1
-            else:
-                break
+            # At seemingly fixed intervals, the stream sends an empty message
+            if not str(message):
+                moveon += 1
+                continue
+            data = json.loads(str(message))
+            # Sometimes the stream just sends fights
+            if 'games' not in data['value']:
+                moveon += 1
+                continue
+            # At this point, it's safe to process it
+            games = json.loads(str(message))['value']['games']
+            brackets = games['postseasons']
+            for bracket in brackets:
+                matchups = bracket['allMatchups']
+                for matchup in matchups:
+                    if matchup['awayTeam'] and matchup['homeTeam']:
+                        teams_playing.add(matchup['awayTeam'])
+                        teams_playing.add(matchup['homeTeam'])
+            break
     #     playoffs = mike.get_playoff_details(season)
     #     round_id = playoffs['rounds'][0] # Just get wildcard round
     #     round = mike.get_playoff_round(round_id)
@@ -223,6 +220,7 @@ def update(spreadsheet_ids):
             ON CONFLICT (player_id) DO
             UPDATE SET player_name="{1}", team_name="{2}", games={3}, pas={4}, hits={5}, homeruns={6}, steals={7}, papg={8}, hppa={9}, hrppa={10}, sbppa={11}, lineup_avg={12}, lineup_current={13}, can_earn={14}, multiplier={15}'''.format(*entry))
 
+    quit()
     # Save changes to database
     sqldb.commit()
 

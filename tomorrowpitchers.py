@@ -1,7 +1,9 @@
 import blaseball_mike.database as mike
 import gspread
+import json
 import logging
 import requests
+from sseclient import SSEClient
 
 ''' phases
             e[e.Preseason = 1] = "Preseason",
@@ -38,6 +40,44 @@ def update(spreadsheet_ids):
     # Earlsiesta and latesiesta mess up the "tomorrow" thing
     if sim['phase'] in [3,5]:
         tomorrow = sim['day']+1
+    # After the brackets have been decided but before the wildcard round begins, it's complicated
+    elif sim['phase'] in [8]:
+        logging.info("Pre-Postseason detected. Getting streamData.")
+        matchups_d100 = {}
+        pitchers_d99 = {}
+        # Get full streamdata
+        stream = SSEClient('http://blaseball.com/events/streamData')
+        for message in stream:
+            # At seemingly fixed intervals, the stream sends an empty message
+            if not str(message):
+                moveon += 1
+                continue
+            data = json.loads(str(message))
+            # Sometimes the stream just sends fights
+            if 'games' not in data['value']:
+                moveon += 1
+                continue
+            # At this point, it's safe to process it
+            games = json.loads(str(message))['value']['games']
+            brackets = games.get('postseasons')
+            # ... Maybe. Let's be really sure
+            if not brackets:
+                continue
+            # Get D100 teams
+            for bracket in brackets:
+                matchups = bracket['allMatchups']
+                for matchup in matchups:
+                    if matchup['awayTeam'] and matchup['homeTeam']: # Only get wildcard matchups
+                        matchups_d100[matchup['id']] = {
+                            'awayTeam': matchup['awayTeam'],
+                            'homeTeam': matchup['homeTeam']
+                        }
+            # Get D99 pitchers to calculate D100 pitchers later
+            for game in games['schedule']:
+                pitchers_d99[game['awayTeam']] = game['awayPitcher']
+                pitchers_d99[game['homeTeam']] = game['homePitcher']
+            # break
+    # If it's just a normal part of the season or postseason after D100, it's super easy
     else:
         # Check if today's games are finished. Tomorrow's pitchers could be wrong, otherwise.
         today = sim['day']+1
@@ -51,7 +91,78 @@ def update(spreadsheet_ids):
     # Get tomorrow's game
     # mike uses 1-indexed seasons and days as input
     # blaseball.com returns 0-indexed seasons and days
-    games = mike.get_games(season, tomorrow)
+    # If pre-playoffs, we have to be more creative.
+    if sim['phase'] in [8]:
+        # Get wildcard round team details
+        team_ids = []
+        for matchup in matchups_d100.values():
+            team_ids.append(matchup['awayTeam'])
+            team_ids.append(matchup['homeTeam'])
+        teams_d100 = {}
+        for team_id in team_ids:
+            team = mike.get_team(team_id)
+            teams_d100[team['id']] = team
+        
+        # Iterate over the playoffs matchups to get D100 pitchers
+        games = {}
+        inactive_mods = ['ELSEWHERE','SHELLED']
+        for idx,matchup in enumerate(matchups_d100.values()):
+            games[idx] = {'weather': 0}
+            for team_side in ['homeTeam','awayTeam']:
+                # Get the ID of the D100 home pitcher. Start by finding slot that pitched D99
+                team_id = matchup[team_side]
+                rotation = teams_d100[team_id]['rotation']*4
+                pitcher_d99 = pitchers_d99[team_id]
+                # Get enough games prior to D99 to cover every pitcher slot
+                games_before_num = [98-n for n in range(len(teams_d100[team_id]['rotation'])-1)]
+                games_sets_before_all = [list(mike.get_games(season, game).values()) for game in games_before_num]
+                games_before_team = []
+                for games_set_before_all in games_sets_before_all:
+                    game_before_team = [game for game in games_set_before_all if team_id in game['homeTeam'] or team_id in game['awayTeam']][0]
+                    games_before_team.append(game_before_team)
+                # Loop through those prior games to determine the D99 pitching slot
+                slot_99_idx = 0 # Need a default in case there's only one active pitcher.
+                for game_idx,game in enumerate(games_before_team):
+                    if game['homeTeam'] == team_id:
+                        pitcher_before = game['homePitcher']
+                    elif game['awayTeam'] == team_id:
+                        pitcher_before = game['awayPitcher']
+                    if pitcher_before != pitcher_d99:
+                        before_idx = rotation.index(pitcher_before)+len(teams_d100[team_id]['rotation'])
+                        slot_99_idx = 1+game_idx+before_idx
+                        break
+                # Now determine the D100 pitcher.
+                # The algorithm is *probably* the second available pitcher after the D99 pitching slot.
+                slot_100_idx = slot_99_idx + 1 # Start here
+                verified_100 = False
+                skippedone = False
+                while not verified_100:
+                    pitcher_d100 = list(mike.get_player(rotation[slot_100_idx]).values())[0]
+                    pitcher_mods = pitcher_d100['permAttr']+pitcher_d100['seasAttr']+pitcher_d100['itemAttr']
+                    if not any(mod in pitcher_mods for mod in inactive_mods) and pitcher_d100['id']:
+                        if not skippedone: # Skip the first available pitcher
+                            slot_100_idx += 1
+                            skippedone=True
+                            continue
+                        else: # This is it!!
+                            verified_100 = True
+                    else:
+                        slot_100_idx += 1
+                        continue
+                # Now that we've confirmed the pitcher for this game, add to the stand-in games object
+                if team_side == 'homeTeam':
+                    games[idx]['homeTeam'] = matchup['homeTeam']
+                    games[idx]['homeOdds'] = 0.500 # Unknown odds!
+                    games[idx]['homePitcher'] = pitcher_d100['id']
+                    games[idx]['homePitcherName'] = pitcher_d100['name']
+                elif team_side == 'awayTeam':
+                    games[idx]['awayTeam'] = matchup['awayTeam']
+                    games[idx]['awayOdds'] = 0.500 # Unknown odds!
+                    games[idx]['awayPitcher'] = pitcher_d100['id']
+                    games[idx]['awayPitcherName'] = pitcher_d100['name']
+    # Otherwise, just get tomorrow's games normally
+    else:
+        games = mike.get_games(season, tomorrow)
 
     # Get stadiums for determining if pitchers are faxable
     stadiums = {}
@@ -67,13 +178,13 @@ def update(spreadsheet_ids):
         fax_machine = True if 'FAX_MACHINE' in stadiums[stadium_id]['mods'] and game['weather'] not in [1,14] else False
         pitchers[game['homePitcher']] = {
             'name': game['homePitcherName'],
-            'odds': game['homeOdds'],
+            'odds': round(game['homeOdds'],3),
             'faxable': fax_machine,
             'multiplier': 0
         }
         pitchers[game['awayPitcher']] = {
             'name': game['awayPitcherName'],
-            'odds': game['awayOdds'],
+            'odds': round(game['awayOdds'],3),
             'faxable': False,
             'multiplier': 0
         }

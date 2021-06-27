@@ -204,7 +204,8 @@ def update(spreadsheet_ids):
         # Finally, if we're between the election and D0, get updated lineup sizes post-election
         if sim['phase'] == 0:
             team_id = player_details[player_id]['leagueTeamId']
-            lineup_current = teams_lineup[team_id]
+            if team_id in teams_inleague:
+                lineup_current = teams_lineup[team_id]
 
         # Add player data to database
         entry = [player_id, player_name, team_abbr, games, pas, hits-homeruns, homeruns, steals, papg, hppa, hrppa, sbppa, lineup_avg, lineup_current, can_earn, multiplier]

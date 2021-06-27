@@ -224,6 +224,8 @@ def update(spreadsheet_ids):
     worksheet.update('A4:P', payload)
 
     # Update the day
+    if sim['phase'] == 0: # After election, get full season projections!
+        today = 0
     worksheet.update('B1', today)
 
     logging.info("Hitter spreadsheet updated.")

@@ -1,5 +1,6 @@
 import blaseball_mike.database as mike
 import gspread
+import itertools
 import json
 import logging
 import requests
@@ -37,11 +38,17 @@ def update(spreadsheet_ids):
     credentials = gspread.service_account()
     worksheet = credentials.open_by_key(spreadsheet_id).worksheet('Tomorrow\'s Pitchers')
 
+    # Get Tomorrow
+    # Set tomorrow to 1 during the preseason
+    if sim['phase'] in [1]:
+        tomorrow = 1
     # Earlsiesta and latesiesta mess up the "tomorrow" thing
-    if sim['phase'] in [3,5]:
+    elif sim['phase'] in [3,5]:
         tomorrow = sim['day']+1
     # After the brackets have been decided but before the wildcard round begins, it's complicated
+    # Get Day 99 pitchers and the matchups for Day 100
     elif sim['phase'] in [8]:
+        tomorrow = 100
         logging.info("Pre-Postseason detected. Getting streamData.")
         matchups_d100 = {}
         pitchers_d99 = {}
@@ -76,7 +83,6 @@ def update(spreadsheet_ids):
             for game in games['schedule']:
                 pitchers_d99[game['awayTeam']] = game['awayPitcher']
                 pitchers_d99[game['homeTeam']] = game['homePitcher']
-            # break
     # If it's just a normal part of the season or postseason after D100, it's super easy
     else:
         # Check if today's games are finished. Tomorrow's pitchers could be wrong, otherwise.
@@ -91,8 +97,29 @@ def update(spreadsheet_ids):
     # Get tomorrow's game
     # mike uses 1-indexed seasons and days as input
     # blaseball.com returns 0-indexed seasons and days
+    # If we're preseason, we need to manually get Day 1 pitchers (first in lineup)
+    if sim['phase'] in [1]:
+        # Get all teams playing
+        games = mike.get_games(season, tomorrow)
+        for game_id in games:
+            team_home_id = games[game_id]['homeTeam']
+            team_home = mike.get_team(team_home_id)
+            pitcher_home_id = team_home['rotation'][0]
+            pitcher_home = mike.get_player(pitcher_home_id)
+            pitcher_home_name = list(pitcher_home.values())[0]['name']
+            games[game_id]['homeOdds'] = 0.500
+            games[game_id]['homePitcher'] = pitcher_home_id
+            games[game_id]['homePitcherName'] = pitcher_home_name
+            team_away_id = games[game_id]['awayTeam']
+            team_away = mike.get_team(team_away_id)
+            pitcher_away_id = team_away['rotation'][0]
+            pitcher_away = mike.get_player(pitcher_away_id)
+            pitcher_away_name = list(pitcher_away.values())[0]['name']
+            games[game_id]['awayOdds'] = 0.500
+            games[game_id]['awayPitcher'] = pitcher_away_id
+            games[game_id]['awayPitcherName'] = pitcher_away_name
     # If pre-playoffs, we have to be more creative.
-    if sim['phase'] in [8]:
+    elif sim['phase'] in [8]:
         # Get wildcard round team details
         team_ids = []
         for matchup in matchups_d100.values():
@@ -235,6 +262,7 @@ if __name__ == "__main__":
     spreadsheet_ids = {
         19: '1_p6jsPxMvO0nGE-fiqGfilu-dxeUc994k2zwAGNVNr0',
         20: '1EAqMvv2KrC9DjlJdlXrH_JXmHtAStxRJ661lWbuwYQs',
-        21: '1DBCpsYlDOft5wve7IKTXAH-3zeoZIUy7A_R4a5uiYz8'
+        21: '1DBCpsYlDOft5wve7IKTXAH-3zeoZIUy7A_R4a5uiYz8',
+        22: '1nC8ZU0dz2kyOH4w78jIcitMdhk9KhVKbKBSXC1QEkXY'
     }
     update(spreadsheet_ids)

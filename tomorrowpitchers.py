@@ -38,14 +38,17 @@ def update(spreadsheet_ids):
     credentials = gspread.service_account()
     worksheet = credentials.open_by_key(spreadsheet_id).worksheet('Tomorrow\'s Pitchers')
 
+    # Map of team ID to shorthand
+    teams = mike.get_all_teams()
+    teams_shorten = {}
+    for team_id in teams:
+        teams_shorten[team_id] = teams[team_id]['shorthand']
+
     # Get Tomorrow
-    # Set tomorrow to 1 during the preseason
-    if sim['phase'] in [1]:
-        tomorrow = 1
-    # Earlsiesta and latesiesta mess up the "tomorrow" thing
-    elif sim['phase'] in [3,5]:
+    # Preseason, Earlsiesta, and Latesiesta mess up the "tomorrow" thing since the day starts before games do
+    if sim['phase'] in [1,3,5]:
         tomorrow = sim['day']+1
-    # After the brackets have been decided but before the wildcard round begins, it's complicated
+    # After the brackets have been decided but before the wildcard round begins, it's really complicated
     # Get Day 99 pitchers and the matchups for Day 100
     elif sim['phase'] in [8]:
         tomorrow = 100
@@ -107,6 +110,7 @@ def update(spreadsheet_ids):
             pitcher_home_id = team_home['rotation'][0]
             pitcher_home = mike.get_player(pitcher_home_id)
             pitcher_home_name = list(pitcher_home.values())[0]['name']
+            games[game_id]['homeTeam'] = team_home_id
             games[game_id]['homeOdds'] = 0.500
             games[game_id]['homePitcher'] = pitcher_home_id
             games[game_id]['homePitcherName'] = pitcher_home_name
@@ -115,6 +119,7 @@ def update(spreadsheet_ids):
             pitcher_away_id = team_away['rotation'][0]
             pitcher_away = mike.get_player(pitcher_away_id)
             pitcher_away_name = list(pitcher_away.values())[0]['name']
+            games[game_id]['awayTeam'] = team_away_id
             games[game_id]['awayOdds'] = 0.500
             games[game_id]['awayPitcher'] = pitcher_away_id
             games[game_id]['awayPitcherName'] = pitcher_away_name
@@ -178,12 +183,12 @@ def update(spreadsheet_ids):
                         continue
                 # Now that we've confirmed the pitcher for this game, add to the stand-in games object
                 if team_side == 'homeTeam':
-                    games[idx]['homeTeam'] = matchup['homeTeam']
+                    games[idx]['homeTeam'] = team_id
                     games[idx]['homeOdds'] = 0.500 # Unknown odds!
                     games[idx]['homePitcher'] = pitcher_d100['id']
                     games[idx]['homePitcherName'] = pitcher_d100['name']
                 elif team_side == 'awayTeam':
-                    games[idx]['awayTeam'] = matchup['awayTeam']
+                    games[idx]['awayTeam'] = team_id
                     games[idx]['awayOdds'] = 0.500 # Unknown odds!
                     games[idx]['awayPitcher'] = pitcher_d100['id']
                     games[idx]['awayPitcherName'] = pitcher_d100['name']
@@ -204,12 +209,14 @@ def update(spreadsheet_ids):
         # Pitcher is faxable if it is a home game for them, their stadium has fax machines, and the weather isn't Sun 2 or Black Hole
         fax_machine = True if 'FAX_MACHINE' in stadiums[stadium_id]['mods'] and game['weather'] not in [1,14] else False
         pitchers[game['homePitcher']] = {
+            'team': teams_shorten[game['homeTeam']],
             'name': game['homePitcherName'],
             'odds': round(game['homeOdds'],3),
             'faxable': fax_machine,
             'multiplier': 0
         }
         pitchers[game['awayPitcher']] = {
+            'team': teams_shorten[game['awayTeam']],
             'name': game['awayPitcherName'],
             'odds': round(game['awayOdds'],3),
             'faxable': False,
@@ -235,21 +242,22 @@ def update(spreadsheet_ids):
 
     # Sort by multiplier
     pitchers_lists = [list(pitcher.values()) for pitcher in pitchers.values()]
-    pitchers_lists.sort(key = lambda x: x[3], reverse=True)
+    pitchers_lists.sort(key = lambda x: x[4], reverse=True)
 
     # Pad to 24 pitchers
     while len(pitchers_lists) < 24:
-        pitchers_lists.append(['','','',''])
+        pitchers_lists.append(['','','','',''])
 
     # Get individual columns
-    pitcher_names = [[pitcher[0]] for pitcher in pitchers_lists]
-    pitcher_other = [pitcher[1:] for pitcher in pitchers_lists]
-    # multipliers = [[pitcher[1]] for pitcher in pitchers_lists]
-    # odds = [[pitcher[2]] for pitcher in pitchers_lists]
-    # faxable = [[pitcher[3]] for pitcher in pitchers_lists]
+    # teams = [[pitcher[0]] for pitcher in pitchers_lists]
+    pitcher_names = [pitcher[0:2] for pitcher in pitchers_lists]
+    pitcher_other = [pitcher[2:] for pitcher in pitchers_lists]
+    # multipliers = [[pitcher[2]] for pitcher in pitchers_lists]
+    # odds = [[pitcher[3]] for pitcher in pitchers_lists]
+    # faxable = [[pitcher[4]] for pitcher in pitchers_lists]
 
     # Add tomorrow's pitchers to spreadsheet
-    worksheet.update('B4', pitcher_names)
+    worksheet.update('A4:B', pitcher_names)
     worksheet.update('I4:K', pitcher_other)
     # worksheet.update('I4', odds)
     # worksheet.update('J4', faxable)

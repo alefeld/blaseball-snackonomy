@@ -58,6 +58,10 @@ def update():
     ''')])
     today = sim['day']+1
     days = [day for day in range(1,today) if day not in days_processed] + [today] # Always today, and everything else if needed
+    # If it's preseason, we have nothing to process, so end.
+    if sim['phase'] in [1]:
+        logging.info("It's preseason, so there aren't any statsheets to process!")
+        return
     # If we're in siesta, don't process "today" because "today" is actually tomorrow
     if sim['phase'] in [3,5]:
         days.remove(today)

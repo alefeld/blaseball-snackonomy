@@ -57,7 +57,7 @@ def update(spreadsheet_ids):
     # Incinerated players
     incinerated = mike.get_tributes()['players']
     incinerated_ids = set([player['playerId'] for player in incinerated])
-    # Map of team full name to shorthand
+    # Map of team ID to shorthand
     teams = mike.get_all_teams()
     teams_shorten = {}
     for team_id in teams:
@@ -70,8 +70,15 @@ def update(spreadsheet_ids):
     pitchers = [ids for team in teams_inleague for ids in team['rotation']]
     # Teams playing tomorrow to support the postseason
     teams_playing = set()
-    # After the brackets have been decided but before the first round begins, it's complicated
-    if sim['phase'] in [8]:
+    # If it's preseason, we have no players to look at, so end
+    if sim['phase'] in [1]:
+        logging.info("It's preseason, so there aren't any hitters to look at!")
+        return
+    # If it's siesta, tomorrow is actually today!
+    elif sim['phase'] in [3,5]:
+        tomorrow = today
+    # After the brackets have been decided but before the first round begins, getting tomorrow's teams is complicated
+    elif sim['phase'] in [8]:
         logging.info("Pre-Postseason detected. Getting streamData.")
         # Get full streamdata
         stream = SSEClient('http://blaseball.com/events/streamData')
@@ -98,6 +105,7 @@ def update(spreadsheet_ids):
                         teams_playing.add(matchup['awayTeam'])
                         teams_playing.add(matchup['homeTeam'])
             break
+    # Otherwise, we can get games easily
     else:
         tomorrow_games = mike.get_games(season, tomorrow)
         for game in tomorrow_games:
@@ -226,6 +234,8 @@ def update(spreadsheet_ids):
     # Update the day
     if sim['phase'] == 0: # After election, get full season projections!
         today = 0
+    elif sim['phase'] in [3,5]: # For siestas, "today" actually hasn't happened yet
+        today = today-1
     worksheet.update('B1', today)
 
     logging.info("Hitter spreadsheet updated.")

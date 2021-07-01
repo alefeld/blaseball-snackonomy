@@ -26,14 +26,16 @@ while True:
             # Sometimes the stream just sends fights
             if 'games' not in data['value']:
                 continue
-            # This should always work, though
+            # If those checks passed, this should work
             games = json.loads(str(message))['value']['games']
             day = games['sim']['day']+1
             season = games['sim']['season']+1
             phase = games['sim']['season']
             schedules = games['schedule']
 
-            # If this day hasn't been processed, run if games are finished. Also run if we switch phases
+            # If this day hasn't been processed, run if games are finished.
+            # Also run if phase changed and there are no games
+            # Also if this is a day after siesta, 
             if day != day_last or season != season_last or phase != phase_last:
                 all_finished = all([schedule['finalized'] for schedule in schedules])
                 if all_finished or (day in [28,73] and not siesta_processed):
@@ -41,11 +43,13 @@ while True:
                     logging.info("Start Timestamp: {:%Y-%b-%d %H:%M:%S}".format(datetime.datetime.now()))
                     update_all.update_all()
                     season_last = season
-                    day_last = day
                     phase_last = phase
+                    # For siestas, don't register the day being done until games have finished
+                    if day not in [28,73] or all_finished:
+                        day_last = day
                     if day in [28,73]:
                         siesta_processed = True
-                    if day in [29,74]:
+                    elif day in [29,74]:
                         siesta_processed = False
                     logging.info("End Timestamp: {:%Y-%b-%d %H:%M:%S}".format(datetime.datetime.now()))
             else:

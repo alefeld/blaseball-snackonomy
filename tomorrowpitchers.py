@@ -60,12 +60,10 @@ def update(spreadsheet_ids):
         for message in stream:
             # At seemingly fixed intervals, the stream sends an empty message
             if not str(message):
-                moveon += 1
                 continue
             data = json.loads(str(message))
             # Sometimes the stream just sends fights
             if 'games' not in data['value']:
-                moveon += 1
                 continue
             # At this point, it's safe to process it
             games = json.loads(str(message))['value']['games']
@@ -86,6 +84,7 @@ def update(spreadsheet_ids):
             for game in games['schedule']:
                 pitchers_d99[game['awayTeam']] = game['awayPitcher']
                 pitchers_d99[game['homeTeam']] = game['homePitcher']
+            break # Exit the loop now that we've got the necessary streamData
     # If it's just a normal part of the season or postseason after D100, it's super easy
     else:
         # Check if today's games are finished. Tomorrow's pitchers could be wrong, otherwise.

@@ -85,12 +85,10 @@ def update(spreadsheet_ids):
         for message in stream:
             # At seemingly fixed intervals, the stream sends an empty message
             if not str(message):
-                moveon += 1
                 continue
             data = json.loads(str(message))
             # Sometimes the stream just sends fights
             if 'games' not in data['value']:
-                moveon += 1
                 continue
             # At this point, it's safe to process it
             games = json.loads(str(message))['value']['games']
@@ -104,7 +102,7 @@ def update(spreadsheet_ids):
                     if matchup['awayTeam'] and matchup['homeTeam']:
                         teams_playing.add(matchup['awayTeam'])
                         teams_playing.add(matchup['homeTeam'])
-            break
+            break # Exit the loop now that we've got the necessary streamData
     # Otherwise, we can get games easily
     else:
         tomorrow_games = mike.get_games(season, tomorrow)

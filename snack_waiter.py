@@ -30,7 +30,7 @@ while True:
             games = json.loads(str(message))['value']['games']
             day = games['sim']['day']+1
             season = games['sim']['season']+1
-            phase = games['sim']['season']
+            phase = games['sim']['phase']
             schedules = games['schedule']
 
             # If this day hasn't been processed, run if games are finished.

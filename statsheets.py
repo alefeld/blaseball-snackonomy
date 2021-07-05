@@ -69,6 +69,17 @@ def update():
     # Get incinerated players. We'll skip these statsheets
     incinerated = mike.get_tributes()['players']
     incinerated_ids = set([player['playerId'] for player in incinerated])
+    # Get teams with haunted lineups. Use this to exclude KLONGs from lineup size later
+    teams_haunted = set()
+    teams_all = mike.get_all_teams()
+    teams_inleague = [team for team in teams_all.values() if team['stadium']]
+    hitters_inleague_ids = []
+    for team_inleague in teams_inleague:
+        hitters_inleague_ids.extend(team_inleague['lineup'])
+    hitters_inleague = mike.get_player(hitters_inleague_ids)
+    for hitter in hitters_inleague.values():
+        if 'HAUNTED' in hitter['permAttr']:
+            teams_haunted.add(hitter['leagueTeamId'])
 
     # Get all player data
     for day in days:
@@ -144,12 +155,12 @@ def update():
                 
             # Assemble hitter stats
             for hitter_statsheets in [hitter_statsheets_home, hitter_statsheets_away]:
-                # Get this team's lineup size for today
-                lineup_size = len(hitter_statsheets)
-                # For the Crabs, Ignore KLONGs (Kennedy Loser Nonexistent Ghosts/New Guys). These ghosts are incinerated but won't show up as such.
-                if hitter_statsheets[0]['teamId'] == '8d87c468-699a-47a8-b40d-cfb73a5660ad':
+                # Calculate lineup size. If this team is haunted, do this carefully (takes longer).
+                if hitter_statsheets[0]['teamId'] in teams_haunted:
                     hitter_ids = [statsheet['playerId'] for statsheet in hitter_statsheets]
                     lineup_size = len(mike.get_player(hitter_ids).keys())
+                else:
+                    lineup_size = len(hitter_statsheets)
                 hitters_stats = {}
                 for hitter_statsheet in hitter_statsheets:
                     # Easy stats

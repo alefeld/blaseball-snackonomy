@@ -63,6 +63,7 @@ def update(spreadsheet_ids):
     for team_id in teams:
         teams_shorten[team_id] = teams[team_id]['shorthand']
     # List of teams in league (ignore historical/coffee cup teams)
+    teams_inleague_ids = [team for team in teams if teams[team]['stadium']]
     teams_inleague = [team for team in teams.values() if team['stadium']]
     # Shadows players for players who moved to shadows
     shadows = [ids for team in teams_inleague for ids in team['shadows']]
@@ -129,8 +130,10 @@ def update(spreadsheet_ids):
     # Get details for use later (mods, team active, etc.)
     player_ids = [player_id[0] for player_id in player_ids]
     player_details = mike.get_player(player_ids)
+    # Only use players that belong to a team in the league. This will remove KLONGs who later became visible
+    player_ids_inleague = [player_id for player_id in player_ids if player_id in player_details.keys() and player_details[player_id]['leagueTeamId'] in teams_inleague_ids]
 
-    for player_id in player_ids:
+    for player_id in player_ids_inleague:
 
         # If this player can't be gotten, like, say a ghost inhabits someone but the ghost doesn't technically EXIST...
         if player_id not in player_details:
@@ -225,7 +228,7 @@ def update(spreadsheet_ids):
 
     # Update spreadsheet
     payload = [list(player) for player in sqldb.execute('''SELECT * FROM hitters_proj ORDER BY team_name''')]
-    while len(payload) < 300:
+    while len(payload) < 350:
         payload.append(['','','','','','','','','','','','','','','',''])
     worksheet.update('A4:P', payload)
 

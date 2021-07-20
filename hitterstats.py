@@ -77,8 +77,10 @@ def update(spreadsheet_ids):
         return
     # If it's siesta, tomorrow is actually today!
     elif sim['phase'] in [3,5]:
-        tomorrow = today
-    # After the brackets have been decided but before the first round begins, getting tomorrow's teams is complicated
+        tomorrow_games = mike.get_games(season, today)
+        for game in tomorrow_games:
+            teams_playing.add(tomorrow_games[game]['awayTeam'])
+            teams_playing.add(tomorrow_games[game]['homeTeam'])
     elif sim['phase'] in [8]:
         logging.info("Pre-Postseason detected. Getting streamData.")
         # Get full streamdata

@@ -33,9 +33,9 @@ def update(spreadsheet_ids):
     sun2_payouts = sun2_activations + sun2_glazed
 
     # Solar Eclipse
-    events_eclipse = mike.get_feed_global(season=season, limit=200, type_=54)
-    # url = https://www.blaseball.com/database/feed/global?limit=200&season=18&type=54
-    incinerations = len([event for event in events_eclipse if "rogue umpire incinerated" in event['description'].lower()])
+    events_eclipse = mike.get_feed_global(season=season, limit=200, type_=125)
+    # url = https://www.blaseball.com/database/feed/global?limit=200&season=23&type=125
+    incinerations = len([event for event in events_eclipse])
 
     # Flooding
     events_flood = mike.get_feed_global(season=season, limit=2000, type_=62)

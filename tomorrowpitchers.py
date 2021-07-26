@@ -195,23 +195,16 @@ def update(spreadsheet_ids):
     else:
         games = mike.get_games(season, tomorrow)
 
-    # Get stadiums for determining if pitchers are faxable
-    stadiums = {}
-    stadiums_query = requests.get('https://api.sibr.dev/chronicler/v2/entities?type=stadium').json()['items']
-    for stadium in stadiums_query:
-        stadiums[stadium['data']['id']] = stadium['data']
-
     # Get pitchers
     pitchers = {}
     for game in games.values():
-        stadium_id = mike.get_team(game['homeTeam'])['stadium']
-        # Pitcher is faxable if it is a home game for them, their stadium has fax machines, and the weather isn't Sun 2 or Black Hole
-        fax_machine = True if 'FAX_MACHINE' in stadiums[stadium_id]['mods'] and game['weather'] not in [1,14] else False
+        # Pitcher is faxable if it is a home game for them, and the weather isn't Sun 2 or Black Hole
+        faxable = True if game['weather'] not in [1,14] else False
         pitchers[game['homePitcher']] = {
             'team': teams_shorten[game['homeTeam']],
             'name': game['homePitcherName'],
             'odds': round(game['homeOdds'],3),
-            'faxable': fax_machine,
+            'faxable': faxable,
             'multiplier': 0
         }
         pitchers[game['awayPitcher']] = {

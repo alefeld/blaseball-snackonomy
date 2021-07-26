@@ -63,8 +63,8 @@ def update(spreadsheet_ids):
     for team_id in teams:
         teams_shorten[team_id] = teams[team_id]['shorthand']
     # List of teams in league (ignore historical/coffee cup teams)
-    teams_inleague_ids = [team for team in teams if teams[team]['stadium']]
-    teams_inleague = [team for team in teams.values() if team['stadium']]
+    teams_inleague_ids = [team for team in teams if teams[team]['stadium'] and team != '698cfc6d-e95e-4391-b754-b87337e4d2a9']
+    teams_inleague = [team for team in teams.values() if team['stadium'] and team['id'] != '698cfc6d-e95e-4391-b754-b87337e4d2a9']
     # Shadows players for players who moved to shadows
     shadows = [ids for team in teams_inleague for ids in team['shadows']]
     # Pitchers for players who reverbed/feedbacked to being a pitcher
@@ -196,9 +196,9 @@ def update(spreadsheet_ids):
         # Determine payout multiplier
         multiplier = 1
         if 'DOUBLE_PAYOUTS' in player_mods:
-            multiplier = 2
+            multiplier += 1
         if 'CREDIT_TO_THE_TEAM' in player_mods:
-            multiplier = 5
+            multiplier += 4
 
         # Get earning stats
         hppa = (hits-homeruns)/pas # Homeruns don't count for seeds

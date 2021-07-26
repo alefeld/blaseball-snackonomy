@@ -35,7 +35,11 @@ In short, this repo processes data from the Blaseball.com/database/ REST API and
 
 **Server Deployment** - This code is deployed on the SIBR server and can be monitored with Portainer. The Elder Servorcerers of SIBR can help if a problem arises related to hosting to code. A working commit will automatically update the docker container, so even someone without access to the Portainer can update this repository if they have commit access. With access to the Portainer, `waiter.log` can be checked to see the last time the update pipeline was run. The Portainer log can also be useful to see error messages, which is especially useful if a bad commit is pushed or if the container stops for some reason.
 
+Additionally, https://snacks.sibr.dev redirects to the snacks spreadsheet, though this redirect must be updated over time.
+
 **Updating for new seasons** - It is quite simple to update this repository for each season. The spreadsheet ID for the new season must be added to `update_all.py` in the spreadsheet_ids dictionary. This dictionary is also present in `hitterstats.py`, `pitcherstats.py`, `tomorrowpitchers.py`, and `weathersnacks.py`, but these only need updated if a maintainer wants to run a specific module on its own. It is advised to keep these update to date as well, though.
+
+The redirect can be changed on the SIBR server in /srv/docker/nginx-general/snacks/index.html. The old page may get stuck in your browser's cache. Some workarounds are: (1) Clear your cache, (2) Add a '?' to the end of the url
 
 **Troubleshooting/What not to do** 
 

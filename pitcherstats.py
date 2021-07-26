@@ -59,7 +59,7 @@ def update(spreadsheet_ids):
     for team_id in teams:
         teams_shorten[team_id] = teams[team_id]['shorthand']
     # List of teams in league (ignore historical/coffee cup teams)
-    teams_inleague = [team for team in teams.values() if team['stadium']]
+    teams_inleague = [team for team in teams.values() if team['stadium'] and team['id'] != '698cfc6d-e95e-4391-b754-b87337e4d2a9']
     # Shadows players for players who moved to shadows
     shadows = [ids for team in teams_inleague for ids in team['shadows']]
     # Hitters for players who reverbed/feedbacked to being a pitcher
@@ -172,9 +172,9 @@ def update(spreadsheet_ids):
         # Determine payout multiplier
         multiplier = 1
         if 'DOUBLE_PAYOUTS' in player_mods:
-            multiplier = 2
+            multiplier += 1
         if 'CREDIT_TO_THE_TEAM' in player_mods:
-            multiplier = 5
+            multiplier += 4
 
         # Get each player's current team's shortname (abbreviation)
         team_abbr = teams_shorten.get(player_details[player_id]['leagueTeamId'], 'NULL')
@@ -191,7 +191,7 @@ def update(spreadsheet_ids):
 
     # Update spreadsheet
     payload = [list(player) for player in sqldb.execute('''SELECT * FROM pitchers_spreadsheet ORDER BY team_name''')]
-    while len(payload) < 125:
+    while len(payload) < 175:
         payload.append(['','','','','','','','','','','','',''])
     worksheet.update('A4:P', payload)
 

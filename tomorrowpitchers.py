@@ -229,9 +229,9 @@ def update(spreadsheet_ids):
         player_mods = pitcher_details[pitcher_id]['permAttr']+pitcher_details[pitcher_id]['seasAttr']+pitcher_details[pitcher_id]['itemAttr']
         multiplier = 1
         if 'DOUBLE_PAYOUTS' in player_mods:
-            multiplier = 2
+            multiplier += 1
         if 'CREDIT_TO_THE_TEAM' in player_mods:
-            multiplier = 5
+            multiplier += 4
         # Check if this player has a mod preventing them from making money
         inactive_mods = ['ELSEWHERE','SHELLED','LEGENDARY','REPLICA','NON_IDOLIZED']
         can_earn = int(not any(mod in player_mods for mod in inactive_mods))

@@ -72,7 +72,7 @@ def update():
     # Get teams with haunted lineups. Use this to exclude KLONGs from lineup size later
     teams_haunted = set()
     teams_all = mike.get_all_teams()
-    teams_inleague = [team for team in teams_all.values() if team['stadium']]
+    teams_inleague = [team for team in teams_all.values() if team['stadium'] and team['id'] != '698cfc6d-e95e-4391-b754-b87337e4d2a9']
     hitters_inleague_ids = []
     for team_inleague in teams_inleague:
         hitters_inleague_ids.extend(team_inleague['lineup'])

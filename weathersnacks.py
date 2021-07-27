@@ -19,7 +19,7 @@ def update(spreadsheet_ids):
     worksheet = credentials.open_by_key(spreadsheet_id).worksheet('Weather Snacks')
 
     # Black Hole
-    events_bh = mike.get_feed_global(season=season, limit=200, type_=30)
+    events_bh = mike.get_feed_global(season=season, limit=200, type_=30) + mike.get_feed_global(season=season, limit=200, type_=249)
     # url = https://www.blaseball.com/database/feed/global?limit=200&season=18&type=30
     bh_activations = len(events_bh)
     bh_jampacked = len([event for event in events_bh if "worms collect" in event['description'].lower()])

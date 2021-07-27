@@ -33,9 +33,10 @@ def update(spreadsheet_ids):
     sun2_payouts = sun2_activations + sun2_glazed
 
     # Solar Eclipse
-    events_eclipse = mike.get_feed_global(season=season, limit=200, type_=125)
+    events_eclipse = mike.get_feed_global(season=season, limit=1000, type_=125)
     # url = https://www.blaseball.com/database/feed/global?limit=200&season=23&type=125
-    incinerations = len([event for event in events_eclipse])
+    incinerations = len([event for event in events_eclipse])-2 # Temporary fix for team incinerations
+    incinerations_payouts = incinerations-31 # Temporary fix for The Breath Mints being incinerated not paying out. Also, team incinerations don't pay out but super idols DO. Ugh.
 
     # Flooding
     events_flood = mike.get_feed_global(season=season, limit=2000, type_=62)
@@ -55,7 +56,7 @@ def update(spreadsheet_ids):
     payload = [
         [bh_activations, bh_payouts], 
         [sun2_activations, sun2_payouts], 
-        [incinerations, incinerations],
+        [incinerations, incinerations_payouts],
         [flood_activations, flood_payouts], 
         [attacks, attacks]
     ]

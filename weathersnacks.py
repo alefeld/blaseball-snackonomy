@@ -36,7 +36,7 @@ def update(spreadsheet_ids):
     events_eclipse = mike.get_feed_global(season=season, limit=1000, type_=125)
     # url = https://www.blaseball.com/database/feed/global?limit=200&season=23&type=125
     incinerations = len([event for event in events_eclipse])-2 # Temporary fix for team incinerations
-    incinerations_payouts = incinerations-31 # Temporary fix for The Breath Mints being incinerated not paying out. Also, team incinerations don't pay out but super idols DO. Ugh.
+    incinerations_payouts = incinerations-29 # Temporary fix for The Breath Mints being incinerated not paying out and Super Idol incin paying out double.
 
     # Flooding
     events_flood = mike.get_feed_global(season=season, limit=2000, type_=62)

@@ -161,7 +161,7 @@ def update():
                     hitter_ids = [statsheet['playerId'] for statsheet in hitter_statsheets]
                     lineup_size = len(mike.get_player(hitter_ids).keys())
                 else:
-                    lineup_size = len(hitter_statsheets)
+                    lineup_size = len(set([hitter_statsheet['playerId'] for hitter_statsheet in hitter_statsheets]))
                 hitters_stats = {}
                 for hitter_statsheet in hitter_statsheets:
                     # Easy stats

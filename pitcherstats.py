@@ -49,7 +49,7 @@ def update(spreadsheet_ids):
 
     # Prep some fields:
     # Mods that mean a player can't earn money
-    inactive_mods = set(['ELSEWHERE','SHELLED','LEGENDARY','REPLICA','NON_IDOLIZED'])
+    inactive_mods = set(['ELSEWHERE','SHELLED','REDACTED','LEGENDARY','REPLICA','NON_IDOLIZED'])
     # Incinerated players
     incinerated = mike.get_tributes()['players']
     incinerated_ids = set([player['playerId'] for player in incinerated])

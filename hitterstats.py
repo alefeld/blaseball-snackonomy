@@ -31,22 +31,22 @@ def update(spreadsheet_ids):
     sqldb.execute('''DROP TABLE IF EXISTS hitters_proj''')
     sqldb.execute('''
         CREATE TABLE IF NOT EXISTS hitters_proj (
-            player_id TINYTEXT NOT NULL,
-            player_name TINYTEXT,
-            team_name TINYTEXT,
-            games TINYINT UNSIGNED,
-            pas SMALLINT UNSIGNED,
-            hits SMALLINT UNSIGNED,
-            homeruns SMALLINT UNSIGNED,
-            steals SMALLINT UNSIGNED,
-            papg FLOAT,
-            hppa FLOAT,
-            hrppa FLOAT,
-            sbppa FLOAT,
-            lineup_avg FLOAT,
-            lineup_current TINYINT UNSIGNED,
-            can_earn TINYINT UNSIGNED,
-            multiplier TINYINT UNSIGNED,
+            player_id TEXT NOT NULL,
+            player_name TEXT,
+            team_name TEXT,
+            games INTEGER,
+            pas INTEGER,
+            hits INTEGER,
+            homeruns INTEGER,
+            steals INTEGER,
+            papg REAL,
+            hppa REAL,
+            hrppa REAL,
+            sbppa REAL,
+            lineup_avg REAL,
+            lineup_current INTEGER,
+            can_earn INTEGER,
+            multiplier INTEGER,
             primary key (player_id)
         )
     ''')

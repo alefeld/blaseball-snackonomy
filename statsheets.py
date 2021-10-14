@@ -17,34 +17,34 @@ def update():
     sqldb = sqlite3.connect('databases/blaseball_S{}.db'.format(season))
     sqldb.execute('''
         CREATE TABLE IF NOT EXISTS hitters_statsheets (
-            statsheet_id TINYTEXT,
-            player_id TINYTEXT NOT NULL,
-            day TINYINT UNSIGNED,
-            player_name TINYTEXT,
-            team_name TINYTEXT,
-            atbats SMALLINT UNSIGNED,
-            pas SMALLINT UNSIGNED,
-            hits SMALLINT UNSIGNED,
-            homeruns SMALLINT UNSIGNED,
-            steals SMALLINT UNSIGNED,
-            lineup_size TINYINT UNSIGNED,
+            statsheet_id TEXT,
+            player_id TEXT NOT NULL,
+            day INTEGER,
+            player_name TEXT,
+            team_name TEXT,
+            atbats INTEGER,
+            pas INTEGER,
+            hits INTEGER,
+            homeruns INTEGER,
+            steals INTEGER,
+            lineup_size INTEGER,
             primary key (player_id, day)
         )
     ''')
     sqldb.execute('''
         CREATE TABLE IF NOT EXISTS pitchers_statsheets (
-            statsheet_id TINYTEXT,
-            player_id TINYTEXT NOT NULL,
-            day TINYINT UNSIGNED,
-            player_name TINYTEXT,
-            team_name TINYTEXT,
-            wins TINYINT UNSIGNED,
-            losses TINYINT UNSIGNED,
-            outs SMALLINT UNSIGNED,
-            runs SMALLINT UNSIGNED,
-            strikeouts SMALLINT UNSIGNED,
-            homeruns SMALLINT UNSIGNED,
-            shutouts TINYINT UNSIGNED,
+            statsheet_id TEXT,
+            player_id TEXT NOT NULL,
+            day INTEGER,
+            player_name TEXT,
+            team_name TEXT,
+            wins INTEGER,
+            losses INTEGER,
+            outs INTEGER,
+            runs INTEGER,
+            strikeouts INTEGER,
+            homeruns INTEGER,
+            shutouts INTEGER,
             primary key (player_id, day)
         )
     ''')

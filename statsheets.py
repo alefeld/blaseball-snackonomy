@@ -2,7 +2,7 @@ import blaseball_mike.database as mike
 import logging
 import sqlite3
 
-def update():
+def update(season=None):
     '''
     Updates sqlite3 database with this season's games to date
     '''
@@ -11,7 +11,8 @@ def update():
 
     # Get season
     sim = mike.get_simulation_data()
-    season = sim['season']+1
+    if not season:
+        season = sim['season']+1
 
     # Initialize database
     sqldb = sqlite3.connect('databases/blaseball_S{}.db'.format(season))
@@ -58,6 +59,7 @@ def update():
     ''')])
     today = sim['day']+1
     days = [day for day in range(1,today) if day not in days_processed] + [today] # Always today, and everything else if needed
+    days = [day for day in range(1,130) if day not in days_processed] ### RETROSPECTIVE ONLY
     # If it's preseason, we have nothing to process, so end.
     if sim['phase'] in [1]:
         logging.info("It's preseason, so there aren't any statsheets to process!")
@@ -77,18 +79,25 @@ def update():
     hitters_inleague_ids = []
     for team_inleague in teams_inleague:
         hitters_inleague_ids.extend(team_inleague['lineup'])
-    hitters_inleague = mike.get_player(hitters_inleague_ids)
-    for hitter in hitters_inleague.values():
-        if 'HAUNTED' in hitter['permAttr']:
-            teams_haunted.add(hitter['leagueTeamId'])
+    ### COMMENTED FOR RETROSPECTIVE ONLY
+    # hitters_inleague = mike.get_player(hitters_inleague_ids)
+    # for hitter in hitters_inleague.values():
+    #     if 'HAUNTED' in hitter['permAttr']:
+    #         teams_haunted.add(hitter['leagueTeamId'])
 
     # Get all player data
     for day in days:
         logging.info("Processing Day {}...".format(day))
         # Get the day's game statsheets
-        games = mike.get_games(season,day)
+        games_allsim = mike.get_games(season,day)
+        games = {}
+        for game in games_allsim:
+            if games_allsim[game]['sim']=='thisidisstaticyo':
+                games[game] = games_allsim[game]
         game_ids = list(games.keys())
         game_statsheet_ids = [games[game_id]['statsheet'] for game_id in game_ids]
+        if not game_statsheet_ids:
+            continue
         game_statsheets = mike.get_game_statsheets(game_statsheet_ids).values()
         # Get team statsheets
         teams = ['homeTeamStats', 'awayTeamStats']
@@ -101,6 +110,8 @@ def update():
             team_statsheet_away = team_statsheets[team_statsheet_ids_pair[1]]
             player_statsheet_ids_home = team_statsheet_home['playerStats']
             player_statsheet_ids_away = team_statsheet_away['playerStats']
+            if not player_statsheet_ids_home or not player_statsheet_ids_away:
+                continue
             player_statsheets_home = mike.get_player_statsheets(player_statsheet_ids_home).values()
             player_statsheets_away = mike.get_player_statsheets(player_statsheet_ids_away).values()
             pitcher_statsheets_teams = {}
@@ -148,6 +159,8 @@ def update():
                     else:
                         pitchers_stats[player_id] = [statsheet_id, player_id, day, player_name, team_name, wins, losses, outs, runs, strikeouts, homeruns, shutouts]
             for pitcher_stats in pitchers_stats.values():
+                if pitcher_stats[1]==None: # Retrospective problems
+                    continue
                 sqldb.execute('''INSERT INTO pitchers_statsheets (statsheet_id, player_id, day, player_name, team_name, wins, losses, outs, runs, strikeouts, homeruns, shutouts)
                     VALUES ("{0}", "{1}", {2}, "{3}", "{4}", {5}, {6}, {7}, {8}, {9}, {10}, {11})
                     ON CONFLICT (player_id, day) DO
@@ -157,6 +170,8 @@ def update():
             # Assemble hitter stats
             for hitter_statsheets in [hitter_statsheets_home, hitter_statsheets_away]:
                 # Calculate lineup size. If this team is haunted, do this carefully (takes longer).
+                if not hitter_statsheets:
+                    continue
                 if hitter_statsheets[0]['teamId'] in teams_haunted:
                     hitter_ids = [statsheet['playerId'] for statsheet in hitter_statsheets]
                     lineup_size = len(mike.get_player(hitter_ids).keys())
@@ -183,6 +198,8 @@ def update():
                     else:
                         hitters_stats[player_id] = [statsheet_id, player_id, day, player_name, team_name, atbats, pas, hits, homeruns, steals, lineup_size]
                 for hitter_stats in hitters_stats.values():
+                    if hitter_stats[1]==None: # Retrospective problems
+                        continue
                     sqldb.execute('''INSERT INTO hitters_statsheets (statsheet_id, player_id, day, player_name, team_name, atbats, pas, hits, homeruns, steals, lineup_size)
                         VALUES ("{0}", "{1}", {2}, "{3}", "{4}", {5}, {6}, {7}, {8}, {9}, {10})
                         ON CONFLICT (player_id, day) DO

@@ -2,7 +2,9 @@ import blaseball_mike.database as mike
 import gspread
 import logging
 
-def update(spreadsheet_ids):
+import requests
+
+def update(spreadsheet_ids, season=None):
     '''
     Updates weather values in this season's snack spreadsheet
     '''
@@ -10,8 +12,9 @@ def update(spreadsheet_ids):
     logging.info("Updating weather stats...")
 
     # Get current season
-    sim = mike.get_simulation_data()
-    season = sim['season']+1
+    if not season:
+        sim = mike.get_simulation_data()
+        season = sim['season']+1
     spreadsheet_id = spreadsheet_ids[season]
 
     # Connect to spreadsheet
@@ -19,37 +22,44 @@ def update(spreadsheet_ids):
     worksheet = credentials.open_by_key(spreadsheet_id).worksheet('Weather Snacks')
 
     # Black Hole
-    events_bh = mike.get_feed_global(season=season, limit=200, type_=30) + mike.get_feed_global(season=season, limit=200, type_=249)
-    # url = https://www.blaseball.com/database/feed/global?limit=200&season=18&type=30
+    events_bh = mike.get_feed_global(season=season, limit=1000000, type_=30, sim='thisidisstaticyo') + mike.get_feed_global(season=season, type_=249)
+    events_bh = [event for event in events_bh if event['season']+1==season]
+    # url = https://api.blaseball.com/database/feed/global?limit=200&season=18&type=30
     bh_activations = len(events_bh)
     bh_jampacked = len([event for event in events_bh if "worms collect" in event['description'].lower()])
     bh_payouts = bh_activations + bh_jampacked
 
     # Sun 2
-    events_sun2 = mike.get_feed_global(season=season, limit=200, type_=31)
-    # url = https://www.blaseball.com/database/feed/global?limit=200&season=18&type=31
+    events_sun2 = mike.get_feed_global(season=season, limit=1000000, type_=31, sim='thisidisstaticyo')
+    events_sun2 = [event for event in events_sun2 if event['season']+1==season]
+    # url = https://api.blaseball.com/database/feed/global?limit=200&season=18&type=31
     sun2_activations = len(events_sun2)
     sun2_glazed = len([event for event in events_sun2 if "tacos collect" in event['description'].lower()])
     sun2_payouts = sun2_activations + sun2_glazed
 
     # Solar Eclipse
-    events_eclipse = mike.get_feed_global(season=season, limit=1000, type_=125)
-    # url = https://www.blaseball.com/database/feed/global?limit=200&season=23&type=125
-    incinerations = len([event for event in events_eclipse])-2 # Temporary fix for team incinerations
-    incinerations_payouts = incinerations-29 # Temporary fix for The Breath Mints being incinerated not paying out and Super Idol incin paying out double.
+    events_eclipse = mike.get_feed_global(season=season, limit=1000000, type_=125, sim='thisidisstaticyo')
+    events_eclipse = [event for event in events_eclipse if event['season']+1==season]
+    # url = https://api.blaseball.com/database/feed/global?limit=200&season=23&type=125
+    incinerations = len([event for event in events_eclipse])
+    incinerations_payouts = incinerations
+    # incinerations = len([event for event in events_eclipse])-2 # Temporary fix for team incinerations
+    # incinerations_payouts = incinerations-29 # Temporary fix for The Breath Mints being incinerated not paying out and Super Idol incin paying out double.
 
     # Flooding
-    events_flood = mike.get_feed_global(season=season, limit=2000, type_=62)
-    # url = https://www.blaseball.com/database/feed/global?limit=500&season=18&type=62
+    events_flood = mike.get_feed_global(season=season, limit=10000000, type_=62, sim='thisidisstaticyo')
+    events_flood = [event for event in events_flood if event['season']+1==season]
+    # url = https://api.blaseball.com/database/feed/global?limit=500&season=18&type=62
     flood_activations = len(events_flood)
-    events_swept = mike.get_feed_global(season=season, limit=2000, type_=106)
-    # url = https://www.blaseball.com/database/feed/global?limit=500&season=18&type=106
-    # flood_payouts = len([event for event in events_swept if "swept elsewhere" in event['description'].lower()])
-    flood_payouts = len([event for event in events_swept if "was swept" in event['description'].lower()])
+    events_swept = mike.get_feed_global(season=season, limit=10000000, type_=106, sim='thisidisstaticyo')
+    events_swept = [event for event in events_swept if event['season']+1==season]
+    # url = https://api.blaseball.com/database/feed/global?limit=500&season=18&type=106
+    flood_payouts = len([event for event in events_swept if "was swept" in event['description'].lower()]) ### FIXME This doesn't count runners simply swept off base! :(
 
     # Consumers
-    events_consumers = mike.get_feed_global(season=season, limit=2000, type_=67)
-    # url = https://www.blaseball.com/database/feed/global?limit=500&season=18&type=67
+    events_consumers = mike.get_feed_global(season=season, limit=2000000, type_=67, sim='thisidisstaticyo')
+    events_consumers = [event for event in events_consumers if event['season']+1==season]
+    # url = https://api.blaseball.com/database/feed/global?limit=500&season=18&type=67
     attacks = len([event for event in events_consumers if "consumer" in event['description'].lower()])
 
     # Update sheet

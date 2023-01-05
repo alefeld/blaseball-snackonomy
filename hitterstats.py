@@ -6,7 +6,7 @@ import sqlite3
 from sseclient import SSEClient
 
 
-def update(spreadsheet_ids):
+def update(spreadsheet_ids, season=None):
     '''
     Updates all hitter stats in the future hitting income tab of this season's snack spreadsheet
     '''
@@ -15,7 +15,8 @@ def update(spreadsheet_ids):
 
     # Get current season
     sim = mike.get_simulation_data()
-    season = sim['season']+1
+    if not season:
+        season = sim['season']+1
     spreadsheet_id = spreadsheet_ids[season]
 
     # Connect to spreadsheet
@@ -132,9 +133,13 @@ def update(spreadsheet_ids):
 
     # Get details for use later (mods, team active, etc.)
     player_ids = [player_id[0] for player_id in player_ids]
+    if player_ids == ['None']:
+        logging.error("No player ids in this season's database! Aborting hitterstats update.")
+        return
     player_details = mike.get_player(player_ids)
     # Only use players that belong to a team in the league. This will remove KLONGs who later became visible
-    player_ids_inleague = [player_id for player_id in player_ids if player_id in player_details.keys() and player_details[player_id]['leagueTeamId'] in teams_inleague_ids]
+    # player_ids_inleague = [player_id for player_id in player_ids if player_id in player_details.keys() and player_details[player_id]['leagueTeamId'] in teams_inleague_ids] ### RETROSPECTIVE COMMENT
+    player_ids_inleague = player_ids ### RETROSPECTIVE ONLY
 
     for player_id in player_ids_inleague:
 
@@ -196,10 +201,10 @@ def update(spreadsheet_ids):
 
         # Determine payout multiplier
         multiplier = 1
-        if 'DOUBLE_PAYOUTS' in player_mods:
-            multiplier += 1
-        if 'CREDIT_TO_THE_TEAM' in player_mods:
-            multiplier += 4
+        # if 'DOUBLE_PAYOUTS' in player_mods: ### RETROSPECTIVE COMMENTS
+        #     multiplier += 1
+        # if 'CREDIT_TO_THE_TEAM' in player_mods:
+        #     multiplier += 4
 
         # Get earning stats
         hppa = (hits-homeruns)/pas # Homeruns don't count for seeds
@@ -251,6 +256,6 @@ if __name__ == "__main__":
         21: '1DBCpsYlDOft5wve7IKTXAH-3zeoZIUy7A_R4a5uiYz8',
         22: '1nC8ZU0dz2kyOH4w78jIcitMdhk9KhVKbKBSXC1QEkXY',
         23: '1jAHAHGgjpZp_PGDyedEvSSJVY-7Sq9bVkMcMTZjSBtg',
-        24: '12cbSlctxlukuUIxb9T9eo2lIcMmnEqvI7dkF9906a_Q'
+        24: '1UPDfwQh-kXsUUQUArYDGa1ViZ9Pdmt-m4D7Ji46w6-8'
     }
     update(spreadsheet_ids)

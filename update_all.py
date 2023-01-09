@@ -12,12 +12,13 @@ spreadsheet_ids = {
     21: '1DBCpsYlDOft5wve7IKTXAH-3zeoZIUy7A_R4a5uiYz8',
     22: '1nC8ZU0dz2kyOH4w78jIcitMdhk9KhVKbKBSXC1QEkXY',
     23: '1jAHAHGgjpZp_PGDyedEvSSJVY-7Sq9bVkMcMTZjSBtg',
-    24: '12cbSlctxlukuUIxb9T9eo2lIcMmnEqvI7dkF9906a_Q'
+    24: '12cbSlctxlukuUIxb9T9eo2lIcMmnEqvI7dkF9906a_Q',
+
 }
 
 def update_all(spreadsheet_ids=spreadsheet_ids):
     tomorrowpitchers.update(spreadsheet_ids)
-    weathersnacks.update(spreadsheet_ids)
+    #weathersnacks.update(spreadsheet_ids)
     statsheets.update()
     hitterstats.update(spreadsheet_ids)
     pitcherstats.update(spreadsheet_ids)

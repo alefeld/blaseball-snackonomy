@@ -2,7 +2,7 @@
 # The Economy
 At the end of the last era, The Coin was melted (RIV girlboss). The many ways fans had to making coins were abolished. Even the very concept of money was abolished. The era of expansion, consumerism, inflation, and debt was at an end. Then Blaseball returned, and we forgot about all those lessons. All hail the new economy!
 
-~[An account feed message from S24 of the Expansion Era. It reads "You earned nothing from 51 Incinerations!"](YouEarnedNothing.png)
+~[An account feed message from S24 of the Expansion Era. It reads "You earned nothing from 51 Incinerations!"](./YouEarnedNothing.png)
 
 ### What is an economy?
 An economy is usually based on goods and services being produced and traded which establishes a sort of value for the product. People who participate in the economy must therefore produce value in order to be in the position to spend it. Blaseball said, "Nah that's dumb. People should get free money and gamble with it. Now *that's* an economy!"

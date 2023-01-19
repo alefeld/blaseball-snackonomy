@@ -129,7 +129,7 @@ while more_games:
         day = home_wins + home_losses + 1
 
         # Don't process a game if we already processed the complete version
-        # This prevent overwriting the first complete record with a later one 
+        # This prevents overwriting the first complete record with a later one 
         if game_id not in gameids_processed:
             if gamedata['complete']:
 

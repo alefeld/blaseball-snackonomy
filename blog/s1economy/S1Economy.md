@@ -39,7 +39,7 @@ It doesn't seem right to bet on some games and not others, though. So I also dev
 
 Then I looked at more complicated methods of betting. I calculated the non-rounded star ratings of each team's skills (batting, running, defense, pitching, and vibes).  To my surprise, batting stars was the best predictor of a win so far! Congrats to the Sunbeams for winning that NEW Batting Boost blessing, I guess. I also calculated the stars of the starting pitchers for each game, and to no surprise that performed a little better than the team's overall pitching.
 
-![Tables show the profits from betting on the team with the better Batting, Runing, Defense, Pitching, Vibes, and Starting Pitcher. It reads: Batting=5875, Running=3816, Defense=386, Pitching=3463, Vibes=1401, Better Pitcher=4011.](ComboBets.png)
+![Tables show the profits from betting on the team with the better Batting, Runing, Defense, Pitching, Vibes, and Starting Pitcher. It reads: Batting=5875, Running=3816, Defense=386, Pitching=3463, Vibes=1401, Better Pitcher=4011.](SkillBets.png)
 
 My [Season 1 Economic Report](https://docs.google.com/spreadsheets/d/1gWt4dGGDhxZtSNDXnwXDmAB79sp4LyGhIq2L5SKEBU0/) is viewable by anyone. It can be copied and manipulated by you, dear reader. I've seen others take my data and use it to test all sorts of scenarios besides these, with some pushing even greater theoretical profits.
 

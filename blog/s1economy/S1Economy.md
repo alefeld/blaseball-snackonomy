@@ -43,6 +43,6 @@ My [Season 1 Economic Report](https://docs.google.com/spreadsheets/d/1gWt4dGGDhx
 
 ### Final Thoughts
 
-Altogether, the fanbase used over 2 million votes in the Season 1 election! About of third of those votes were spent on decrees. The amount of votes spent per blessing ranged from ~12,500 to ~215,000. Well done, voters! *(Thanks, Edgarware, for those numbers!)* 
+Altogether, the fanbase used over 2 million votes in the Season 1 election! About of third of those votes were spent on decrees (if you're willing to believe facts machine...). The amount of votes spent per blessing ranged from ~12,500 to ~215,000. Well done, voters! *(Thanks, Edgarware, for those numbers!)* 
 
 Hopefully you feel more informed now to go and bet next season! Beat the sim and hoard a pile of chips! Don't worry about bankrupting the league; Blaseball is printing money! It's a golden age! Surely nothing bad will come of it.
